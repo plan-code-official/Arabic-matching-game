@@ -95,4 +95,4 @@ export class GameAPI {
   }
 }
 
-export const ARABIC_MATCHING_GAME_ID = 7;
+export const ARABIC_MATCHING_GAME_ID = 2;
