@@ -2,11 +2,7 @@ class AudioEngine {
   private ctx: AudioContext | null = null;
   private isMuted: boolean = false;
 
-  constructor() {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.getVoices();
-    }
-  }
+  constructor() {}
 
   private initContext() {
     if (!this.ctx) {
@@ -125,30 +121,8 @@ class AudioEngine {
     }
   }
 
-  speakArabic(word: string) {
-    if ('speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-        
-        // Wait a brief moment to allow cancel to execute in Chrome before queuing speak
-        setTimeout(() => {
-          const utterance = new SpeechSynthesisUtterance(word);
-          utterance.lang = 'ar-SA';
-          utterance.rate = 0.8; // slightly slower for child readability
-          
-          // Find suitable voice
-          const voices = window.speechSynthesis.getVoices();
-          const arVoice = voices.find(v => v.lang.toLowerCase().startsWith('ar'));
-          if (arVoice) {
-            utterance.voice = arVoice;
-          }
-          
-          window.speechSynthesis.speak(utterance);
-        }, 100);
-      } catch (e) {
-        console.warn('Speech synthesis failed', e);
-      }
-    }
+  speakArabic(_word: string) {
+    // Disabled: text-to-speech / voice speech by AI removed
   }
 }
 

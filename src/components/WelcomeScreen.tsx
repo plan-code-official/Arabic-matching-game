@@ -42,10 +42,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
 
         {/* Game Title */}
         <h1 className="text-2xl md:text-3xl font-black text-amber-950 mb-3 drop-shadow-sm">
-          لعبة مطابقة الصور العربية
+          لعبة ذاكرة كروت الكلمات
         </h1>
         <p className="text-md font-bold text-amber-800/80 mb-6">
-          تحدي الذكاء والسرعة للأطفال 🍎🍰🍌
+          تحدي تذكر ومطابقة الصور والكلمات 🍎🧠🚗
         </p>
 
         {/* Instruction details */}
@@ -55,10 +55,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
             <span>كيف تلعب؟</span>
           </h3>
           <ul className="text-xs md:text-sm font-bold text-amber-900/80 list-disc list-inside">
-            <li style={{ marginBottom: '6px' }}>يظهر سؤال باللغة العربية في البطاقة الذهبية في المنتصف.</li>
-            <li style={{ marginBottom: '6px' }}>يمكنك الضغط على زر مكبر الصوت لتسمع نطق الكلمة.</li>
-            <li style={{ marginBottom: '6px' }}>اختر الصورة المناسبة للكلمة من البطاقات الثلاثة بالأسفل.</li>
-            <li>**احذر**: حكيم 🤖 ينافسك ويجيب تلقائياً، أسرع بالحل لتحصد النقاط!</li>
+            <li style={{ marginBottom: '6px' }}>ستظهر الكروت مكشوفة لمدة ثوانٍ في البداية لحفظ أماكنها.</li>
+            <li style={{ marginBottom: '6px' }}>ستلتف الكروت وتصبح مقلوبة. اضغط على الكروت لمطابقتها!</li>
+            <li style={{ marginBottom: '6px' }}>يمكنك مطابقة صورة مع كلمة (مثل صورة الموزة ↔ كلمة موزة) أو صورة مع صورة.</li>
+            <li>العب ضد الروبوت الذكي حكيم 🤖، صديق بجانبك 👥، أو منافس أونلاين 🌐!</li>
           </ul>
         </div>
 

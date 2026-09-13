@@ -1,556 +1,574 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Volume2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
 import { ScoreHUD } from './ScoreHUD';
-import { ItemIllustration } from './ItemIllustrations';
 import { ResultModal } from './ResultModal';
-import type { Question } from '../data/questions';
+import { MemoryCard } from './MemoryCard';
+import { PreviewTimerHeader } from './PreviewTimerHeader';
+import { ModeSelectModal } from './ModeSelectModal';
+import { DIFFICULTIES, generateDeckFromApi } from '../data/cardData';
+import type { Card, MatchMode } from '../data/cardData';
+import { GameAPI } from '../utils/api';
+import type { ApiSubmitAnswer, ApiQuestion } from '../utils/api';
+import { AIEngine } from '../utils/aiEngine';
+import { MultiplayerService } from '../utils/multiplayer';
 import { audio } from '../utils/audio';
-import { GameAPI, ARABIC_MATCHING_GAME_ID } from '../utils/gameApi';
 
 interface GameScreenProps {
   onBackToWelcome: () => void;
+  lessonId: string;
+  token: string;
 }
 
-export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome }) => {
-  // Game states
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [lanaScore, setLanaScore] = useState(0);
-  const [mariaScore, setMariaScore] = useState(0);
+
+const CHAT_EMOJIS = ['😊', '😮', '😎', '🔥', '👏', '💔', '🤖', '👍'];
+
+export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonId, token }) => {
+  // Configuration State
+  const [isConfigured, setIsConfigured] = useState(false);
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
+  const [matchMode, setMatchMode] = useState<MatchMode>('image-word');
+  const [opponentType, setOpponentType] = useState<'ai' | 'local' | 'online'>('ai');
+  const [category, setCategory] = useState<'all' | 'food' | 'transport' | 'animals' | 'study'>('all');
+
+  const [opponentName] = useState('');
+
+  // Game Play State
+  const [deck, setDeck] = useState<Card[]>([]);
+  const [isPreviewActive, setIsPreviewActive] = useState(false);
+  const [previewTimeLeft, setPreviewTimeLeft] = useState(30);
+
+  const [activeTurn, setActiveTurn] = useState<'player1' | 'player2'>('player1');
+  const [player1Score, setPlayer1Score] = useState(0);
+  const [player2Score, setPlayer2Score] = useState(0);
   const [streakCount, setStreakCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // API
-  const [gameAPI, setGameAPI] = useState<GameAPI | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [urlGameId, setUrlGameId] = useState<number | null>(null);
-  const [urlLessonId, setUrlLessonId] = useState<number | null>(null);
-  
-  // Timer state: 170 seconds = 2 minutes and 50 seconds
-  const [timeLeft, setTimeLeft] = useState(170);
+
+  // Game stats for accuracy calculation
+  const [player1Flips, setPlayer1Flips] = useState(0);
+  const [player1CorrectFlips, setPlayer1CorrectFlips] = useState(0);
+
+  // flippedIndices: indices of currently flipped (revealed) but not yet matched cards
+  const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
+  const [isWaitingForFlipBack, setIsWaitingForFlipBack] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
-  
-  // Card states
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [checkedAnswer, setCheckedAnswer] = useState<string | null>(null);
-  const [mariaChoice, setMariaChoice] = useState<string | null>(null);
-  const [feedbackMsg, setFeedbackMsg] = useState<string>('');
-  
-  // References
-  const mariaTimerRef = useRef<any | null>(null);
-  const advanceTimerRef = useRef<any | null>(null);
-  const timerIntervalRef = useRef<any | null>(null);
-  const selectedAnswerRef = useRef<string | null>(null);
-  const mariaChoiceRef = useRef<string | null>(null);
-  const checkedAnswerRef = useRef<string | null>(null);
-  const isGameOverRef = useRef<boolean>(false);
+  const [isAIThinking, setIsAIThinking] = useState(false);
 
-  // Sync refs on state changes to prevent stale closure bugs in timers
-  useEffect(() => {
-    selectedAnswerRef.current = selectedAnswer;
-  }, [selectedAnswer]);
+  // Emojis reaction states
+  const [p1Emoji, setP1Emoji] = useState('');
 
-  useEffect(() => {
-    mariaChoiceRef.current = mariaChoice;
-  }, [mariaChoice]);
+  // API State
+  const [apiSessionId, setApiSessionId] = useState<string | null>(null);
+  const [apiLoading, setApiLoading] = useState(false);
+  const [apiRewards, setApiRewards] = useState<any>(null);
 
-  useEffect(() => {
-    checkedAnswerRef.current = checkedAnswer;
-  }, [checkedAnswer]);
+  // Refs to hold latest values for use inside timeouts/async code
+  const apiRef = useRef(new GameAPI(token));
+  const answersRef = useRef<ApiSubmitAnswer[]>([]);
+  const turnStartTimeRef = useRef<number>(Date.now());
+  const aiEngineRef = useRef<AIEngine | null>(null);
+  const mpServiceRef = useRef<MultiplayerService | null>(null);
 
-  useEffect(() => {
-    isGameOverRef.current = isGameOver;
-  }, [isGameOver]);
-  
-  const currentQuestion = questions[currentIdx];
+  const deckRef = useRef<Card[]>([]);
+  const flippedIndicesRef = useRef<number[]>([]);
+  const activeTurnRef = useRef<'player1' | 'player2'>('player1');
+  const opponentTypeRef = useRef<'ai' | 'local' | 'online'>('ai');
+  const difficultyRef = useRef<'easy' | 'medium' | 'hard'>('easy');
+  const isWaitingForFlipBackRef = useRef(false);
+  const isGameOverRef = useRef(false);
+  const streakCountRef = useRef(0);
+  const player1ScoreRef = useRef(0);
+  const player2ScoreRef = useRef(0);
+  const player1FlipsRef = useRef(0);
+  const player1CorrectFlipsRef = useRef(0);
 
-  
-  // Initialize API and read URL parameters
+  // Keep refs in sync with state
+  useEffect(() => { deckRef.current = deck; }, [deck]);
+  useEffect(() => { flippedIndicesRef.current = flippedIndices; }, [flippedIndices]);
+  useEffect(() => { activeTurnRef.current = activeTurn; }, [activeTurn]);
+  useEffect(() => { opponentTypeRef.current = opponentType; }, [opponentType]);
+  useEffect(() => { difficultyRef.current = difficulty; }, [difficulty]);
+  useEffect(() => { isWaitingForFlipBackRef.current = isWaitingForFlipBack; }, [isWaitingForFlipBack]);
+  useEffect(() => { isGameOverRef.current = isGameOver; }, [isGameOver]);
+  useEffect(() => { streakCountRef.current = streakCount; }, [streakCount]);
+  useEffect(() => { player1ScoreRef.current = player1Score; }, [player1Score]);
+  useEffect(() => { player2ScoreRef.current = player2Score; }, [player2Score]);
+  useEffect(() => { player1FlipsRef.current = player1Flips; }, [player1Flips]);
+  useEffect(() => { player1CorrectFlipsRef.current = player1CorrectFlips; }, [player1CorrectFlips]);
+
+  // Cleanup on unmount
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const gameIdParam = urlParams.get('gameId');
-    const lessonIdParam = urlParams.get('lessonId');
-    const tokenParam = urlParams.get('token');
-    
-    if (gameIdParam) setUrlGameId(parseInt(gameIdParam));
-    if (lessonIdParam) setUrlLessonId(parseInt(lessonIdParam));
-    
-    let token = tokenParam || localStorage.getItem('childToken') || sessionStorage.getItem('childToken');
-    
-    if (tokenParam) {
-      localStorage.setItem('childToken', tokenParam);
-      token = tokenParam;
-    }
-    
-    if (token) {
-      setGameAPI(new GameAPI(token));
-    } else {
-      setError('يجب تسجيل الدخول أولاً للعب اللعبة');
-      setLoading(false);
-    }
+    return () => {
+      if (mpServiceRef.current) mpServiceRef.current.leave();
+    };
   }, []);
 
-  // Initialize Game
-  const initGame = async () => {
-    if (!gameAPI) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    // Clear any existing timers
-    if (mariaTimerRef.current) clearTimeout(mariaTimerRef.current);
-    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+  // ─── CONFIG HANDLING ────────────────────────────────────────────────────
+  const handleConfigSelected = async (config: {
+    difficulty: 'easy' | 'medium' | 'hard';
+    matchMode: MatchMode;
+    opponent: 'ai' | 'local' | 'online';
+    category: 'all' | 'food' | 'transport' | 'animals' | 'study';
+  }) => {
+    setDifficulty(config.difficulty);
+    setMatchMode(config.matchMode);
+    setOpponentType('ai'); // AI only mode
+    setCategory(config.category);
+    setIsConfigured(true);
 
+    difficultyRef.current = config.difficulty;
+    opponentTypeRef.current = 'ai';
+
+    setApiLoading(true);
     try {
-      const gameIdToUse = urlGameId || ARABIC_MATCHING_GAME_ID;
-      const data = await gameAPI.getQuestions(gameIdToUse, urlLessonId || undefined);
+      const api = apiRef.current;
+      const [questionsRes, sessionRes] = await Promise.all([
+        api.getQuestions(lessonId),
+        api.startSession(lessonId)
+      ]);
       
-      // Transform backend questions to game format
-      const transformedQuestions: Question[] = data.questions.map((q: any) => {
-        const options = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
-        
-        // Convert options to choice objects with text and optional imageUrl
-        const choices = options.map((opt: any) => {
-          if (typeof opt === 'string') {
-            return { text: opt, imageUrl: null };
-          } else {
-            return { text: opt.text || opt, imageUrl: opt.imageUrl || null };
-          }
-        });
-        
-        // Shuffle choices randomly
-        const shuffledChoices = [...choices];
-        for (let i = shuffledChoices.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffledChoices[i], shuffledChoices[j]] = [shuffledChoices[j], shuffledChoices[i]];
-        }
-        
-        return {
-          id: q.id.toString(),
-          word: q.question,
-          choices: shuffledChoices,
-          correctChoice: typeof q.correctAnswer === 'string' ? q.correctAnswer : options[0],
-          imageUrl: q.imageUrl || null
-        };
-      });
+      setApiSessionId(sessionRes.data.id);
       
-      if (transformedQuestions.length === 0) {
-        setError('لا توجد أسئلة متاحة لهذا الدرس');
-        setLoading(false);
-        return;
-      }
-      
-      setQuestions(transformedQuestions);
-      
-      // Start session with lessonId
-      const session = await gameAPI.startSession(gameIdToUse, urlLessonId || undefined);
-      setSessionId(session.id);
-      
-      setCurrentIdx(0);
-      setLanaScore(0);
-      setMariaScore(0);
-      setStreakCount(0);
-      setTimeLeft(170);
-      setIsGameOver(false);
-      setSelectedAnswer(null);
-      setCheckedAnswer(null);
-      setMariaChoice(null);
-      setFeedbackMsg('');
-      setLoading(false);
-    } catch (err: any) {
-      console.error('Failed to load questions:', err);
-      setError('فشل تحميل الأسئلة من الخادم');
-      setLoading(false);
+      aiEngineRef.current = new AIEngine(config.difficulty);
+      startNewGame(config.difficulty, config.matchMode, questionsRes.data.questions);
+    } catch (error) {
+      console.error(error);
+      alert('فشل الاتصال بالخادم. يرجى المحاولة مرة أخرى.');
+      onBackToWelcome();
+    } finally {
+      setApiLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (gameAPI) {
-      initGame();
+
+  // ─── START NEW GAME ─────────────────────────────────────────────────────
+  const startNewGame = useCallback((
+    diff: 'easy' | 'medium' | 'hard',
+    mode: MatchMode,
+    questions: ApiQuestion[]
+  ) => {
+    const newDeck = generateDeckFromApi(questions, diff, mode);
+    setDeck(newDeck);
+    deckRef.current = newDeck;
+    setPlayer1Score(0);
+    player1ScoreRef.current = 0;
+    setPlayer2Score(0);
+    player2ScoreRef.current = 0;
+    setStreakCount(0);
+    streakCountRef.current = 0;
+    setPlayer1Flips(0);
+    player1FlipsRef.current = 0;
+    setPlayer1CorrectFlips(0);
+    player1CorrectFlipsRef.current = 0;
+    setFlippedIndices([]);
+    flippedIndicesRef.current = [];
+    setIsWaitingForFlipBack(false);
+    isWaitingForFlipBackRef.current = false;
+    setIsGameOver(false);
+    isGameOverRef.current = false;
+    setIsAIThinking(false);
+    setActiveTurn('player1');
+    activeTurnRef.current = 'player1';
+
+    if (aiEngineRef.current) {
+      aiEngineRef.current.clearMemory();
     }
-    return () => {
-      if (mariaTimerRef.current) clearTimeout(mariaTimerRef.current);
-      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    };
-  }, [gameAPI]);
+    
+    answersRef.current = [];
+    turnStartTimeRef.current = Date.now();
 
-  // Main countdown timer effect
+    startPreviewPhase(diff);
+  }, [matchMode, category]);
+
+  // ─── PREVIEW PHASE ──────────────────────────────────────────────────────
+  const startPreviewPhase = (diff: 'easy' | 'medium' | 'hard' = difficultyRef.current) => {
+    const limit = DIFFICULTIES[diff].previewTime;
+    setPreviewTimeLeft(limit);
+    setIsPreviewActive(true);
+  };
+
+  const finishPreviewPhase = useCallback(() => {
+    setIsPreviewActive(false);
+    // AI memorizes what it saw during preview
+    if (opponentTypeRef.current === 'ai' && aiEngineRef.current) {
+      aiEngineRef.current.memorizeInitialPreview(deckRef.current);
+    }
+  }, []);
+
+  // Preview countdown
   useEffect(() => {
-    if (isGameOver || questions.length === 0) return;
-
-    timerIntervalRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
+    if (!isPreviewActive || isGameOver) return;
+    const interval = setInterval(() => {
+      setPreviewTimeLeft((prev) => {
         if (prev <= 1) {
-          clearInterval(timerIntervalRef.current!);
-          setIsGameOver(true);
+          clearInterval(interval);
+          finishPreviewPhase();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+    return () => clearInterval(interval);
+  }, [isPreviewActive, isGameOver, finishPreviewPhase]);
 
-    return () => {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    };
-  }, [isGameOver, questions]);
-
-  // Handle Loading a new question (Trigger speech & Maria's AI thoughts)
+  // ─── AI TURN TRIGGER ────────────────────────────────────────────────────
   useEffect(() => {
-    if (questions.length === 0 || isGameOver || currentIdx >= questions.length) return;
+    if (isPreviewActive || isGameOver || isWaitingForFlipBack || isAIThinking) return;
+    if (activeTurn !== 'player2') return;
 
-    const question = questions[currentIdx];
-    setSelectedAnswer(null);
-    setCheckedAnswer(null);
-    setMariaChoice(null);
-    setFeedbackMsg('');
+    if (opponentType === 'ai') {
+      triggerAIMove();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTurn, isPreviewActive, isGameOver, isWaitingForFlipBack, isAIThinking]);
 
-    // Say the Arabic word aloud
-    setTimeout(() => {
-      audio.speakArabic(question.word);
-    }, 500);
+  // ─── CORE FLIP LOGIC (pure function, uses refs) ─────────────────────────
+  const executeFlipCore = useCallback((clickedIdx: number) => {
+    const currentDeck = [...deckRef.current];
+    if (currentDeck[clickedIdx].isFlipped || currentDeck[clickedIdx].isMatched) return;
 
-    // Schedule Hakeem (AI Opponent) to answer
-    // Hakeem will think for 2.0 to 4.5 seconds
-    const thinkTime = 2000 + Math.random() * 2500;
-    mariaTimerRef.current = setTimeout(() => {
-      triggerMariaAnswer(question);
-    }, thinkTime);
+    // Flip the card
+    currentDeck[clickedIdx] = { ...currentDeck[clickedIdx], isFlipped: true };
+    setDeck([...currentDeck]);
+    deckRef.current = [...currentDeck];
+    audio.playClick();
 
-    return () => {
-      if (mariaTimerRef.current) clearTimeout(mariaTimerRef.current);
-    };
-  }, [currentIdx, questions, isGameOver]);
-
-  // Simulating Hakeem's (AI) Answer
-  const triggerMariaAnswer = (question: Question) => {
-    const isQuestionResolved = checkedAnswerRef.current !== null;
-    if (isQuestionResolved || mariaChoiceRef.current !== null || isGameOverRef.current) return;
-
-    // Hakeem should guess from choices not yet guessed (especially avoid player's wrong guess)
-    const availableChoices = question.choices.filter(c => c.text !== selectedAnswerRef.current);
-    const hasCorrectChoice = availableChoices.some(c => c.text === question.correctChoice);
-    let chosenText = '';
-
-    if (hasCorrectChoice && Math.random() < 0.8) {
-      chosenText = question.correctChoice;
-    } else {
-      const incorrectChoices = availableChoices.filter(c => c.text !== question.correctChoice);
-      chosenText = incorrectChoices[Math.floor(Math.random() * incorrectChoices.length)]?.text || availableChoices[0]?.text || question.choices[0].text;
+    // AI observes the card
+    if (opponentTypeRef.current === 'ai' && aiEngineRef.current) {
+      aiEngineRef.current.remember(currentDeck[clickedIdx].uniqueId, currentDeck[clickedIdx].pairId);
     }
 
-    setMariaChoice(chosenText);
+    const newFlipped = [...flippedIndicesRef.current, clickedIdx];
+    setFlippedIndices(newFlipped);
+    flippedIndicesRef.current = newFlipped;
 
-    if (chosenText === question.correctChoice) {
-      setCheckedAnswer(question.correctChoice);
-      setMariaScore((prev) => prev + 10);
-      setFeedbackMsg('🤖 حكيم أجاب بشكل صحيح وأسرع منك!');
-      audio.playFailure();
+    // Only evaluate when 2 cards are flipped
+    if (newFlipped.length === 2) {
+      const [firstIdx, secondIdx] = newFlipped;
 
-      advanceTimerRef.current = setTimeout(() => {
-        goToNextQuestion();
-      }, 2000);
-    } else {
-      // Hakeem made a wrong choice
-      if (selectedAnswerRef.current !== null) {
-        // Both guessed wrong! Reveal correct answer and advance
-        setCheckedAnswer(question.correctChoice);
-        setFeedbackMsg('💥 كِلاكما أخطأ في الإجابة! الإجابة الصحيحة هي: ' + question.word);
-        audio.playFailure();
-        advanceTimerRef.current = setTimeout(() => {
-          goToNextQuestion();
-        }, 2500);
-      } else {
-        // Player hasn't guessed yet, give player a chance
-        setFeedbackMsg('🤖 حكيم اختار إجابة خاطئة! أسرع واجِب أنت!');
-        audio.playClick();
-      }
-    }
-  };
+      // Track player1's attempts
+      if (activeTurnRef.current === 'player1') {
+        const newFlips = player1FlipsRef.current + 1;
+        setPlayer1Flips(newFlips);
+        player1FlipsRef.current = newFlips;
 
-  // Player clicks an option
-  const handlePlayerAnswer = (choiceText: string) => {
-    const isQuestionResolved = checkedAnswer !== null;
-    if (isQuestionResolved || selectedAnswerRef.current !== null || isGameOver) return;
-
-    setSelectedAnswer(choiceText);
-    const isCorrect = choiceText === currentQuestion.correctChoice;
-
-    if (isCorrect) {
-      if (mariaTimerRef.current) clearTimeout(mariaTimerRef.current);
-      setCheckedAnswer(currentQuestion.correctChoice);
-      setLanaScore((prev) => prev + 10);
-      setStreakCount((prev) => prev + 1);
-      setFeedbackMsg('🎉 رائع! إجابتك صحيحة وسريعة! 🌟');
-      audio.playSuccess();
-
-      advanceTimerRef.current = setTimeout(() => {
-        goToNextQuestion();
-      }, 2000);
-    } else {
-      // Player guessed wrong
-      setStreakCount(0);
-      audio.playFailure();
-
-      if (mariaChoiceRef.current !== null) {
-        // Both guessed wrong! Reveal correct and advance
-        setCheckedAnswer(currentQuestion.correctChoice);
-        setFeedbackMsg('💥 كِلاكما أخطأ في الإجابة! الإجابة الصحيحة هي: ' + currentQuestion.word);
-        advanceTimerRef.current = setTimeout(() => {
-          goToNextQuestion();
-        }, 2500);
-      } else {
-        // Hakeem hasn't guessed yet, trigger Hakeem to think and answer now
-        setFeedbackMsg('💥 أوه! إجابة خاطئة. حكيم 🤖 يحاول الإجابة الآن!');
-        if (mariaTimerRef.current) clearTimeout(mariaTimerRef.current);
-        mariaTimerRef.current = setTimeout(() => {
-          triggerMariaAnswer(currentQuestion);
-        }, 1500);
-      }
-    }
-  };
-
-  const goToNextQuestion = () => {
-    if (currentIdx + 1 < questions.length) {
-      setCurrentIdx((prev) => prev + 1);
-    } else {
-      // Game completed - submit to backend
-      if (gameAPI && sessionId) {
-        gameAPI.completeSession(sessionId).catch(err => {
-          console.error('Failed to complete session:', err);
+        const qId = parseInt(currentDeck[firstIdx].pairId, 10);
+        const selectedText = currentDeck[secondIdx].content;
+        const timeTaken = Math.max(1, Math.round((Date.now() - turnStartTimeRef.current) / 1000));
+        answersRef.current.push({
+          questionId: qId,
+          selectedAnswer: selectedText,
+          timeTaken
         });
       }
-      setIsGameOver(true);
+
+      if (currentDeck[firstIdx].pairId === currentDeck[secondIdx].pairId) {
+        // ─── MATCH ───
+        setTimeout(() => {
+          const matchedDeck = [...deckRef.current];
+          matchedDeck[firstIdx] = { ...matchedDeck[firstIdx], isMatched: true, isFlipped: false };
+          matchedDeck[secondIdx] = { ...matchedDeck[secondIdx], isMatched: true, isFlipped: false };
+          setDeck([...matchedDeck]);
+          deckRef.current = [...matchedDeck];
+
+          audio.playSuccess();
+
+          if (activeTurnRef.current === 'player1') {
+            const newScore = player1ScoreRef.current + 10 + streakCountRef.current * 5;
+            setPlayer1Score(newScore);
+            player1ScoreRef.current = newScore;
+            const newCorrect = player1CorrectFlipsRef.current + 1;
+            setPlayer1CorrectFlips(newCorrect);
+            player1CorrectFlipsRef.current = newCorrect;
+          } else {
+            const newScore = player2ScoreRef.current + 10;
+            setPlayer2Score(newScore);
+            player2ScoreRef.current = newScore;
+          }
+
+          const newStreak = streakCountRef.current + 1;
+          setStreakCount(newStreak);
+          streakCountRef.current = newStreak;
+
+          setFlippedIndices([]);
+          flippedIndicesRef.current = [];
+
+          if (opponentTypeRef.current === 'ai' && aiEngineRef.current) {
+            aiEngineRef.current.forget(matchedDeck[firstIdx].uniqueId);
+            aiEngineRef.current.forget(matchedDeck[secondIdx].uniqueId);
+          }
+
+          const allMatched = matchedDeck.every((c) => c.isMatched);
+          if (allMatched) {
+            setIsGameOver(true);
+            isGameOverRef.current = true;
+          } else if (activeTurnRef.current === 'player2') {
+            // Player 2 / AI keeps turn on match, make next move after delay
+            // Fix double-trigger: just reset isAIThinking after a delay and let useEffect trigger it.
+            setTimeout(() => {
+              if (!isGameOverRef.current) {
+                setIsAIThinking(false);
+              }
+            }, 1000);
+          }
+          // Player1 keeps turn on match - no action needed, just reset flipped
+          turnStartTimeRef.current = Date.now();
+        }, 600);
+      } else {
+        // ─── MISMATCH ───
+        setIsWaitingForFlipBack(true);
+        isWaitingForFlipBackRef.current = true;
+
+        setTimeout(() => {
+          const resetDeck = [...deckRef.current];
+          resetDeck[firstIdx] = { ...resetDeck[firstIdx], isFlipped: false };
+          resetDeck[secondIdx] = { ...resetDeck[secondIdx], isFlipped: false };
+          setDeck([...resetDeck]);
+          deckRef.current = [...resetDeck];
+
+          const newStreak = 0;
+          setStreakCount(newStreak);
+          streakCountRef.current = newStreak;
+          setFlippedIndices([]);
+          flippedIndicesRef.current = [];
+          setIsWaitingForFlipBack(false);
+          isWaitingForFlipBackRef.current = false;
+          setIsAIThinking(false);
+
+          // Switch turn
+          const nextTurn = activeTurnRef.current === 'player1' ? 'player2' : 'player1';
+          setActiveTurn(nextTurn);
+          activeTurnRef.current = nextTurn;
+          turnStartTimeRef.current = Date.now();
+
+          audio.playFailure();
+        }, 1200);
+      }
     }
-  };
+  }, []);
 
-  const speakCurrentWord = () => {
-    if (currentQuestion) {
-      audio.speakArabic(currentQuestion.word);
+  // ─── PLAYER CARD CLICK ──────────────────────────────────────────────────
+  const handleCardClick = useCallback((clickedIdx: number) => {
+    if (
+      isGameOverRef.current ||
+      isWaitingForFlipBackRef.current ||
+      flippedIndicesRef.current.length >= 2
+    ) return;
+
+    const card = deckRef.current[clickedIdx];
+    if (!card || card.isFlipped || card.isMatched) return;
+
+    // In AI or Online mode, only player1 can click
+    if (opponentTypeRef.current !== 'local' && activeTurnRef.current !== 'player1') return;
+
+    executeFlipCore(clickedIdx);
+  }, [executeFlipCore]);
+
+  // ─── AI MOVE ─────────────────────────────────────────────────────────────
+  const triggerAIMove = useCallback(async () => {
+    if (!aiEngineRef.current) return;
+    if (isGameOverRef.current) return;
+
+    setIsAIThinking(true);
+
+    const available = deckRef.current.filter((c) => !c.isMatched && !c.isFlipped);
+    if (available.length < 2) {
+      setIsAIThinking(false);
+      return;
     }
+
+    try {
+      const [firstId, secondId] = await aiEngineRef.current.makeMove(deckRef.current);
+
+      const firstIdx = deckRef.current.findIndex((c) => c.uniqueId === firstId && !c.isMatched && !c.isFlipped);
+      if (firstIdx === -1) {
+        setIsAIThinking(false);
+        return;
+      }
+      executeFlipCore(firstIdx);
+
+      setTimeout(() => {
+        if (isGameOverRef.current) { setIsAIThinking(false); return; }
+        const secondIdx = deckRef.current.findIndex((c) => c.uniqueId === secondId && !c.isMatched && !c.isFlipped);
+        if (secondIdx !== -1) {
+          executeFlipCore(secondIdx);
+        } else {
+          setIsAIThinking(false);
+        }
+      }, 900);
+    } catch {
+      setIsAIThinking(false);
+    }
+  }, [executeFlipCore]);
+
+
+  // ─── EMOJI REACTIONS ─────────────────────────────────────────────────────
+  const handleEmojiClick = (emoji: string) => {
+    setP1Emoji(emoji);
+    audio.playClick();
+    setTimeout(() => setP1Emoji(''), 3000);
   };
 
-  // Formatter for timer minutes and seconds
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+
+
+  // ─── ACCURACY ────────────────────────────────────────────────────────────
+  const calculateAccuracy = () => {
+    if (player1Flips === 0) return 100;
+    return Math.round((player1CorrectFlips / player1Flips) * 100);
   };
 
-  const timeLeftPercent = (timeLeft / 170) * 100;
+  // ─── LABELS ──────────────────────────────────────────────────────────────
+  const p1Label = opponentType === 'local' ? 'اللاعب 1' : 'أنت (البطل)';
+  const p2Label =
+    opponentType === 'ai'
+      ? 'حكيم الروبوت 🤖'
+      : opponentType === 'local'
+      ? 'اللاعب 2'
+      : opponentName || 'يبحث...';
+
+  // Determine if player can click cards right now
+  const playerCanClick = !isGameOver
+    && !isPreviewActive
+    && !isWaitingForFlipBack
+    && !isAIThinking
+    && flippedIndices.length < 2
+    && (opponentType === 'local' || activeTurn === 'player1');
+
+  // ─── API COMPLETION ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (isGameOver && apiSessionId) {
+      const submitAndComplete = async () => {
+        try {
+          let answersToSubmit = answersRef.current;
+          // Fallback if player did literally nothing and AI solved the whole game
+          if (answersToSubmit.length === 0) {
+             const firstCard = deckRef.current[0];
+             answersToSubmit = [{
+               questionId: parseInt(firstCard.pairId, 10),
+               selectedAnswer: "No Answer Provided",
+               timeTaken: 1
+             }];
+          }
+          await apiRef.current.submitAnswers(apiSessionId, answersToSubmit);
+          const completeRes = await apiRef.current.completeSession(apiSessionId);
+          setApiRewards(completeRes.data);
+        } catch (e) {
+          console.error('API Error ending session', e);
+        }
+      };
+      submitAndComplete();
+    }
+  }, [isGameOver, apiSessionId]);
+
+  // ─── RENDER ──────────────────────────────────────────────────────────────
+  if (apiLoading) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white font-bold text-xl gap-4">
+        <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+        جاري تحميل اللعبة...
+      </div>
+    );
+  }
+
+
 
   return (
-    <div className="game-screen w-full h-full flex flex-col justify-between items-center relative overflow-hidden bg-sky-gradient">
-      
-      {/* Loading State */}
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-sky-200/90 z-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-500 mx-auto mb-4"></div>
-            <p className="text-xl font-bold text-amber-900">جاري تحميل الأسئلة...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && !loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-sky-200/90 z-50">
-          <div className="bg-white rounded-3xl p-8 shadow-2xl max-w-md text-center">
-            <p className="text-2xl font-bold text-red-600 mb-4">❌ خطأ</p>
-            <p className="text-lg text-gray-700 mb-6">{error}</p>
-            <button
-              onClick={onBackToWelcome}
-              className="px-6 py-3 bg-amber-500 text-white font-bold rounded-full hover:bg-amber-600 transition-colors"
-            >
-              العودة
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {/* Moving background clouds */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[25%] left-[-15%] w-72 h-16 cloud-slow animate-cloud-move-slow" />
-        <div className="absolute top-[60%] right-[-20%] w-96 h-24 cloud-fast animate-cloud-move-fast" />
+    <div className="game-screen w-full h-full flex flex-col items-center relative bg-sky-gradient">
+      {/* Animated background clouds */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
+        <div className="cloud-slow animate-cloud-move-slow" style={{ position:'absolute', top:'15%', left:'-8%', width:'18rem', height:'4rem' }} />
+        <div className="cloud-fast animate-cloud-move-fast" style={{ position:'absolute', top:'60%', right:'-12%', width:'24rem', height:'5rem' }} />
       </div>
 
-      {/* Score and HUD top layout */}
-      <ScoreHUD
-        lanaScore={lanaScore}
-        mariaScore={mariaScore}
-        currentQuestionIndex={currentIdx}
-        totalQuestions={questions.length}
-        timerText={formatTime(timeLeft)}
-        timeLeftPercent={timeLeftPercent}
-        onExit={onBackToWelcome}
-        streakCount={streakCount}
-      />
+      {/* ─ 1. Configuration Modal ─ */}
+      {!isConfigured && (
+        <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', zIndex:20, padding:'1rem' }}>
+          <ModeSelectModal onSelect={handleConfigSelected} />
+        </div>
+      )}
 
-      {/* Center Layout: Question Box */}
-      {currentQuestion && !isGameOver && (
-        <div className="w-full max-w-4xl px-4 flex flex-col items-center justify-center my-auto z-10">
-          
-          {/* Main Question Card */}
-          <div className="w-full max-w-2xl card-question rounded-[28px] py-2.5 px-4 md:py-4 md:px-6 text-center shadow-xl relative animate-bounce-subtle">
-            {/* Double Border Inner Box */}
-            <div className="absolute inset-1 border-2 border-amber-500 border-dashed rounded-[22px] pointer-events-none" />
-            
-            {/* Speaker Button */}
-            <button
-              type="button"
-              onClick={speakCurrentWord}
-              className="absolute top-3 right-3 btn-speaker hover:scale-105 active:scale-95 border-2 border-white rounded-full w-10 h-10 flex items-center justify-center shadow-md cursor-pointer transition-transform"
-              aria-label="Speak word"
-            >
-              <Volume2 className="w-5 h-5 text-amber-950 stroke-[2.5]" />
-            </button>
+      {/* ─ 3. Game Board ─ */}
+      {isConfigured && (
+        <div className="game-layout">
+          {/* ── Compact Top Header ── */}
+          <div className="game-header">
+            {!isPreviewActive && (
+              <ScoreHUD
+                player1Name={p1Label}
+                player2Name={p2Label}
+                player1Score={player1Score}
+                player2Score={player2Score}
+                currentTurn={activeTurn}
+                pairsMatched={deck.filter((c) => c.isMatched).length / 2}
+                totalPairs={deck.length / 2}
+                streakCount={streakCount}
+                onExit={onBackToWelcome}
+                p1Emoji={p1Emoji}
+              />
+            )}
 
-            {/* Question Content - Image or Text */}
-            {currentQuestion.imageUrl ? (
-              <div className="flex flex-col items-center justify-center gap-1 max-w-full">
-                <img 
-                  src={currentQuestion.imageUrl} 
-                  alt={currentQuestion.word}
-                  className="max-h-16 max-w-[90%] object-contain rounded-lg shadow-sm"
+            {/* Preview Timer (compact inline) */}
+            {isPreviewActive && (
+              <PreviewTimerHeader
+                duration={DIFFICULTIES[difficulty].previewTime}
+                timeLeft={previewTimeLeft}
+                onSkip={finishPreviewPhase}
+                onExit={onBackToWelcome}
+              />
+            )}
+
+            {/* Turn Status - now handled by new header */}
+          </div>
+
+          {/* ── Cards Area (fills all remaining space) ── */}
+          <div className="game-cards-area">
+            <div className={`cards-fit-grid ${difficulty === 'hard' ? 'hard-mode' : 'normal-mode'}`}>
+              {deck.map((card, idx) => (
+                <MemoryCard
+                  key={card.uniqueId}
+                  card={card}
+                  onClick={() => handleCardClick(idx)}
+                  disabled={!playerCanClick || card.isMatched || card.isFlipped}
+                  isAIPreview={isPreviewActive}
                 />
-                <h1 className="text-base md:text-lg font-black text-amber-950 leading-tight drop-shadow-sm select-none">
-                  {currentQuestion.word}
-                </h1>
-              </div>
-            ) : (
-              <h1 className="text-2xl md:text-3xl font-black text-amber-950 leading-relaxed drop-shadow-sm select-none">
-                {currentQuestion.word}
-              </h1>
-            )}
+              ))}
+            </div>
           </div>
 
-          {/* Feedback message banner */}
-          <div className="h-6 my-2 flex items-center justify-center">
-            {feedbackMsg && (
-              <span className={`text-md font-black px-4 py-1 rounded-full border shadow-sm ${
-                feedbackMsg.includes('رائع') 
-                  ? 'bg-emerald-100 border-emerald-300 text-emerald-800 animate-pulse' 
-                  : 'bg-amber-100 border-amber-300 text-amber-800'
-              }`}>
-                {feedbackMsg}
-              </span>
-            )}
-          </div>
-
-          {/* Choice cards grid */}
-          <div className="grid grid-cols-3 gap-4 md:gap-6 w-full max-w-3xl mt-2">
-            {currentQuestion.choices.map((choice, index) => {
-              const isSelected = selectedAnswer === choice.text;
-              const isCorrect = choice.text === checkedAnswer;
-              const isMariaChoice = mariaChoice === choice.text;
-
-              let cardStyle = "border-amber-500 bg-white text-amber-dark hover:scale-105";
-              let statusOverlay = null;
-
-              const isQuestionResolved = checkedAnswer !== null;
-
-              if (isQuestionResolved) {
-                // If the question is resolved, we reveal the correct answer and fade others
-                if (isCorrect) {
-                  // Correct Choice shines green
-                  cardStyle = "border-emerald-500 bg-emerald-50 text-emerald-900 shadow-correct-glow";
-                  statusOverlay = (
-                    <div className="absolute inset-0 bg-emerald-500/10 border-2 border-emerald-500 rounded-[22px] flex items-center justify-center">
-                      <span className="text-3xl">✅</span>
-                    </div>
-                  );
-                } else if (isSelected) {
-                  // Wrong choice by player flashes red
-                  cardStyle = "border-red-500 bg-red-50 text-red-900 animate-shake shadow-incorrect-glow";
-                  statusOverlay = (
-                    <div className="absolute inset-0 bg-red-500/10 border-2 border-red-500 rounded-[22px] flex items-center justify-center">
-                      <span className="text-3xl">❌</span>
-                    </div>
-                  );
-                } else if (isMariaChoice) {
-                  // Wrong choice by Hakeem flashes yellow
-                  cardStyle = "border-amber-500 bg-amber-50 text-amber-900 opacity-60";
-                  statusOverlay = (
-                    <div className="absolute inset-0 bg-amber-500/20 border-2 border-amber-500 rounded-[22px] flex items-center justify-center">
-                      <span className="text-xs font-black bg-amber-500 text-white px-2 py-0.5 rounded-full">حكيم 🤖</span>
-                    </div>
-                  );
-                } else {
-                  // Other choices fade
-                  cardStyle = "border-slate-200 opacity-40";
-                }
-              } else {
-                // If not resolved yet, show wrong choices that occurred but keep other choices fully active
-                if (isSelected) {
-                  cardStyle = "border-red-500 bg-red-50 text-red-900 opacity-70 animate-shake";
-                  statusOverlay = (
-                    <div className="absolute inset-0 bg-red-500/10 border-2 border-red-500 rounded-[22px] flex items-center justify-center">
-                      <span className="text-3xl">❌</span>
-                    </div>
-                  );
-                } else if (isMariaChoice) {
-                  cardStyle = "border-amber-500 bg-amber-50 text-amber-900 opacity-60";
-                  statusOverlay = (
-                    <div className="absolute inset-0 bg-amber-500/20 border-2 border-amber-500 rounded-[22px] flex items-center justify-center">
-                      <span className="text-xs font-black bg-amber-500 text-white px-2 py-0.5 rounded-full">حكيم 🤖</span>
-                    </div>
-                  );
-                }
-              }
-
-              return (
+          {/* ── Emoji Bar ── */}
+          <div className="emoji-bar-compact">
+            <span className="emoji-bar-compact__label">تفاعل</span>
+            <div className="emoji-bar-compact__buttons">
+              {CHAT_EMOJIS.slice(0, 4).map((emoji) => (
                 <button
-                  type="button"
-                  key={index}
-                  onClick={() => handlePlayerAnswer(choice.text)}
-                  disabled={isQuestionResolved || choice.text === selectedAnswer || choice.text === mariaChoice}
-                  className={`relative h-24 md:h-28 w-full flex flex-col items-center justify-center p-3 bg-white border-4 rounded-[22px] shadow-md cursor-pointer transition-all duration-300 ease-out select-none ${cardStyle}`}
-                  aria-label={`Answer option: ${choice.text}`}
+                  key={emoji}
+                  id={`emoji-btn-${emoji}`}
+                  onClick={() => handleEmojiClick(emoji)}
+                  className="emoji-btn"
                 >
-                  {choice.imageUrl ? (
-                    // Display image if available
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-0.5 p-1">
-                      <img 
-                        src={choice.imageUrl} 
-                        alt={choice.text}
-                        className="max-h-10 max-w-full object-contain"
-                      />
-                      <span className="text-xs font-bold truncate max-w-full">{choice.text}</span>
-                    </div>
-                  ) : (
-                    // Display text only
-                    <div className="w-full h-full flex items-center justify-center p-2">
-                      <span className="text-sm md:text-base font-bold text-center">{choice.text}</span>
-                    </div>
-                  )}
-                  {statusOverlay}
+                  {emoji}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-
         </div>
       )}
 
-      {/* Footer Branding spacer */}
-      <div className="py-2 z-10 select-none">
-        <span className="text-xs font-bold text-sky-800/60 bg-sky-100/50 px-3 py-1 rounded-full border border-sky-200/50">
-          لعبة مطابقة الصور العربية للأذكياء 🌟
-        </span>
-      </div>
-
-      {/* Result Modal when game ends */}
+      {/* ─ 4. Result Modal ─ */}
       {isGameOver && (
         <ResultModal
-          lanaScore={lanaScore}
-          mariaScore={mariaScore}
-          onRestart={initGame}
+          player1Name={p1Label}
+          player2Name={p2Label}
+          player1Score={player1Score}
+          player2Score={player2Score}
+          accuracy={calculateAccuracy()}
+          onRestart={() => {
+            setIsConfigured(false);
+            handleConfigSelected({ difficulty, matchMode, opponent: 'ai', category });
+          }}
           onExit={onBackToWelcome}
+          apiRewards={apiRewards}
         />
       )}
-
     </div>
   );
 };
