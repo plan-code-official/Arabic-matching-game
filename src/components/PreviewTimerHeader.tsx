@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { LogOut } from 'lucide-react';
 import { audio } from '../utils/audio';
-
+import user1 from "/src/assets/user1.png"
+import user2 from "/src/assets/user2.png"
 interface PreviewTimerHeaderProps {
   duration: number;
   timeLeft: number;
@@ -23,7 +24,7 @@ export const PreviewTimerHeader: React.FC<PreviewTimerHeaderProps> = ({ duration
       <div className="header-main-group">
         {/* Right Avatar - Player/Tiger - Placed first so it renders on the Right in RTL */}
         <div className="header-avatar-container header-avatar-right">
-          <img src="/src/assets/user1.png" alt="Player" className="preview-avatar" />
+          <img src={user1} alt="Player" className="preview-avatar" />
         </div>
 
         {/* Center Console */}
@@ -47,7 +48,7 @@ export const PreviewTimerHeader: React.FC<PreviewTimerHeaderProps> = ({ duration
 
         {/* Left Avatar - Hakim/Robot - Placed last so it renders on the Left in RTL */}
         <div className="header-avatar-container header-avatar-left">
-          <img src="/src/assets/user2.png" alt="Hakim" className="preview-avatar" />
+          <img src={user2} alt="Hakim" className="preview-avatar" />
         </div>
       </div>
 

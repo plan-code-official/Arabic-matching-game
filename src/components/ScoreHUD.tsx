@@ -17,6 +17,8 @@ interface ScoreHUDProps {
 export const ScoreHUD: React.FC<ScoreHUDProps> = ({
   player1Name,
   player2Name,
+  player1Score,
+  player2Score,
   currentTurn,
   onExit,
   p1Emoji
@@ -35,6 +37,10 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
           )}
           <div className="avatar-circle avatar-circle-orange">
             <img src="/src/assets/user1.png" alt={player1Name} className="header-avatar-img" />
+          </div>
+          <div className="avatar-score-badge">
+            <img src="/src/assets/daddcoin.webp" alt="Coin" />
+            <span>{player1Score}</span>
           </div>
         </div>
 
@@ -57,6 +63,10 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
         <div className="header-avatar-container header-avatar-left">
           <div className="avatar-circle avatar-circle-blue">
             <img src="/src/assets/user2.png" alt={player2Name} className="header-avatar-img" />
+          </div>
+          <div className="avatar-score-badge badge-blue">
+            <img src="/src/assets/daddcoin.webp" alt="Coin" />
+            <span>{player2Score}</span>
           </div>
         </div>
       </div>

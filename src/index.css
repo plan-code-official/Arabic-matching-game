@@ -1348,6 +1348,7 @@ body {
   justify-content: center;
   min-width: 66px;
   flex-shrink: 0;
+  gap: 12px;
 }
 
 .avatar-circle {
@@ -1372,6 +1373,31 @@ body {
 .header-avatar-img {
   width: 56px;
   height: 56px;
+  object-fit: contain;
+}
+
+.avatar-score-badge {
+  background: white;
+  border-radius: 20px;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: #ea580c; /* Orange for Player 1 */
+  border: 2px solid #fdba74;
+}
+
+.avatar-score-badge.badge-blue {
+  color: #1d4ed8; /* Blue for Player 2 */
+  border-color: #93c5fd;
+}
+
+.avatar-score-badge img {
+  width: 20px;
+  height: 20px;
   object-fit: contain;
 }
 

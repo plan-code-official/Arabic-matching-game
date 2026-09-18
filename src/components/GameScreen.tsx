@@ -272,14 +272,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
           audio.playSuccess();
 
           if (activeTurnRef.current === 'player1') {
-            const newScore = player1ScoreRef.current + 10 + streakCountRef.current * 5;
+            const newScore = player1ScoreRef.current + 1;
             setPlayer1Score(newScore);
             player1ScoreRef.current = newScore;
             const newCorrect = player1CorrectFlipsRef.current + 1;
             setPlayer1CorrectFlips(newCorrect);
             player1CorrectFlipsRef.current = newCorrect;
           } else {
-            const newScore = player2ScoreRef.current + 10;
+            const newScore = player2ScoreRef.current + 1;
             setPlayer2Score(newScore);
             player2ScoreRef.current = newScore;
           }
