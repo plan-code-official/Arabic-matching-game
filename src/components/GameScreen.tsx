@@ -4,7 +4,6 @@ import { ScoreHUD } from './ScoreHUD';
 import { ResultModal } from './ResultModal';
 import { MemoryCard } from './MemoryCard';
 import { PreviewTimerHeader } from './PreviewTimerHeader';
-import { ModeSelectModal } from './ModeSelectModal';
 import { DIFFICULTIES, generateDeckFromApi } from '../data/cardData';
 import type { Card, MatchMode } from '../data/cardData';
 import { GameAPI } from '../utils/api';
@@ -137,6 +136,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
       setApiLoading(false);
     }
   };
+
+  // ─── AUTO START GAME ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isConfigured) {
+      handleConfigSelected({
+        difficulty: 'easy',
+        matchMode: 'image-word',
+        opponent: 'ai',
+        category: 'all'
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   // ─── START NEW GAME ─────────────────────────────────────────────────────
@@ -478,13 +490,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
         <div className="cloud-slow animate-cloud-move-slow" style={{ position:'absolute', top:'15%', left:'-8%', width:'18rem', height:'4rem' }} />
         <div className="cloud-fast animate-cloud-move-fast" style={{ position:'absolute', top:'60%', right:'-12%', width:'24rem', height:'5rem' }} />
       </div>
-
-      {/* ─ 1. Configuration Modal ─ */}
-      {!isConfigured && (
-        <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', zIndex:20, padding:'1rem' }}>
-          <ModeSelectModal onSelect={handleConfigSelected} />
-        </div>
-      )}
 
       {/* ─ 3. Game Board ─ */}
       {isConfigured && (
