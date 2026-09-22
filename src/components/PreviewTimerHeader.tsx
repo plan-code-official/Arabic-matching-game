@@ -3,6 +3,7 @@ import { LogOut } from 'lucide-react';
 import { audio } from '../utils/audio';
 import user1 from "../assets/user1.png"
 import user2 from "../assets/user2.png"
+
 interface PreviewTimerHeaderProps {
   duration: number;
   timeLeft: number;
