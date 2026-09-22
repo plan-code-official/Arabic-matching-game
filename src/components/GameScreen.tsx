@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 import { ScoreHUD } from './ScoreHUD';
-import Celebration from '../Celebration/Celebration';
-import ResultsPanel from '../ResultsPanel/ResultsPanel';
+import { CelebrationWrapper } from './CelebrationWrapper';
+import { ResultsPanelWrapper } from './ResultsPanelWrapper';
 import { MemoryCard } from './MemoryCard';
 import { PreviewTimerHeader } from './PreviewTimerHeader';
 import { DIFFICULTIES, generateDeckFromApi } from '../data/cardData';
@@ -576,13 +576,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
       )}
 
       {/* ─ 4. Endgame Overlays ─ */}
-      <Celebration
-        isVisible={showCelebration}
-        onComplete={handleCelebrationComplete}
-      />
+      {showCelebration && (
+        <CelebrationWrapper
+          isVisible={showCelebration}
+          onComplete={handleCelebrationComplete}
+        />
+      )}
 
       {showResults && (
-        <ResultsPanel
+        <ResultsPanelWrapper
           score={player1Score}
           totalScore={deck.length / 2}
           correctAnswers={player1CorrectFlips}
