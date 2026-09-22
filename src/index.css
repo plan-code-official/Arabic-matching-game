@@ -1,10 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lateef:wght@400;500;600;700;800&display=swap');
 
 /* ═══════════════════════════════════════════════
    ROOT TOKENS
 ═══════════════════════════════════════════════ */
 :root {
-  --font-arabic: 'Cairo', sans-serif;
+  --font-arabic: 'Lateef', serif;
   --color-amber-400: #fbbf24;
   --color-amber-500: #f59e0b;
   --color-amber-950: #451a03;
@@ -26,10 +27,10 @@
 }
 
 html, body, #root {
-  min-height: 100%;
+  height: 100%;
+  height: 100dvh;
   width: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden; /* Prevent ALL scrolling on the root */
   font-family: var(--font-arabic);
 }
 
@@ -411,7 +412,7 @@ body {
 /* Each memory card slot */
 .memory-card-slot {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 100%;
   cursor: pointer;
   perspective: 1000px;
   user-select: none;
@@ -852,63 +853,70 @@ body {
 
 /* ═══════════════════════════════════════════════
    FULL-SCREEN GAME LAYOUT SYSTEM
-   Goal: Header takes minimum space, cards fill rest
-═══════════════════════════════════════════════ */
-
 /* Outer game wrapper — locked to viewport height */
 .game-layout {
   width: 100%;
   height: 100vh;
-  height: 100dvh; /* For mobile browsers */
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 10;
-  overflow: hidden; /* Lock outer frame to prevent body scroll */
+  overflow: hidden; /* Hard lock — nothing escapes this box */
 }
 
 /* ── Compact Header ── */
 .game-header {
-  flex-shrink: 0;          /* never grows/shrinks, takes what it needs */
+  flex-shrink: 0;          /* Never grows/shrinks */
   display: flex;
   flex-direction: column;
   gap: 0;
   padding: 4px 8px 0;
 }
 
-/* ── Cards area: Main scrollable content zone ── */
+/* ── Cards area: fills ALL remaining space, NO scroll ── */
 .game-cards-area {
-  flex: 1; /* Take remaining space */
-  min-height: 0; /* Crucial for flex scrolling */
-  overflow-y: auto; /* Scrollable region */
-  overflow-x: hidden;
-  padding: 16px 12px;
+  flex: 1;
+  min-height: 0;       /* Crucial: lets flex child shrink below content size */
+  overflow: hidden;    /* NO scrolling ever */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
 }
 
-/* ── The grid itself: height based on content, not forced to 100% ── */
+/*
+  The grid itself:
+  - Columns are fixed (4 or 6)
+  - Rows auto-fill the available height using grid-template-rows
+  - Cards scale via aspect-ratio, constrained by the available height
+*/
 .cards-fit-grid {
   display: grid;
-  gap: clamp(8px, 1.5vw, 16px);
+  gap: clamp(4px, 1vw, 10px);
   width: 100%;
+  height: 100%;         /* Fill the entire cards-area height */
   max-width: 900px;
-  align-items: stretch;
+  max-height: 100%;     /* Never overflow vertically */
   margin: 0 auto;
 }
 
 .cards-fit-grid.normal-mode {
   grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr); /* 12 cards = 4 cols × 3 rows */
 }
 
 .cards-fit-grid.hard-mode {
   grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(4, 1fr); /* 24 cards = 6 cols × 4 rows */
 }
 
-/* Each card slot */
+/* Each card slot — fills its grid cell completely */
 .cards-fit-grid .memory-card-slot {
   width: 100%;
-  aspect-ratio: 3 / 4; /* Fix card ratio so it doesn't squish */
-  min-width: 70px;
-  min-height: 90px;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 /* Keep the inner flip container filling the slot */
@@ -1161,34 +1169,34 @@ body {
   justify-content: center;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 40px;
-  height: 44px;
-  padding: 0 24px;
-  margin: 12px auto calc(env(safe-area-inset-bottom, 0px) + 24px);
+  height: 38px;
+  padding: 0 16px;
+  margin: 4px auto 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   width: max-content;
 }
 
 .emoji-bar-compact__label {
-  display: none; /* Hidden to match design */
+  display: none;
 }
 
 .emoji-bar-compact__buttons {
   display: flex;
-  gap: 24px;
+  gap: 14px;
   align-items: center;
 }
 
 .emoji-bar-compact .emoji-btn {
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   background: #bfdbfe;
-  border: 3px solid white;
+  border: 2px solid white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.8rem;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  font-size: 1.3rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   transition: transform 0.15s ease;
   padding: 0;
   margin: 0;
@@ -1201,7 +1209,6 @@ body {
 .emoji-bar-compact .emoji-btn:active {
   transform: scale(0.95);
 }
-
 
 
 /* ═══════════════════════════════════════════════
@@ -1549,24 +1556,30 @@ body {
   }
 
   .emoji-bar-compact {
-    height: 38px;
-    padding: 0 16px;
-    margin: 8px auto 12px auto;
+    height: 32px;
+    padding: 0 12px;
+    margin: 2px auto 4px auto;
   }
 
   .emoji-bar-compact .emoji-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 1.4rem;
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
   }
 
+  /* Cards fill their grid cell; no min sizes that force overflow */
   .cards-fit-grid .memory-card-slot {
-    min-width: 65px;
-    min-height: 85px;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .cards-fit-grid {
+    max-height: 400px;
   }
 
   .cards-fit-grid.hard-mode {
     grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(6, 1fr); /* 24 cards = 4 cols x 6 rows on mobile */
   }
 }
 

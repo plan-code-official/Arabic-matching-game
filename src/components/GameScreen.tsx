@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 import { ScoreHUD } from './ScoreHUD';
-import { ResultModal } from './ResultModal';
+import Celebration from '../Celebration/Celebration';
+import ResultsPanel from '../ResultsPanel/ResultsPanel';
 import { MemoryCard } from './MemoryCard';
 import { PreviewTimerHeader } from './PreviewTimerHeader';
 import { DIFFICULTIES, generateDeckFromApi } from '../data/cardData';
@@ -49,6 +50,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [isWaitingForFlipBack, setIsWaitingForFlipBack] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const [isAIThinking, setIsAIThinking] = useState(false);
 
   // Emojis reaction states
@@ -123,9 +126,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
         api.getQuestions(lessonId),
         api.startSession(lessonId)
       ]);
-      
+
       setApiSessionId(sessionRes.data.id);
-      
+
       aiEngineRef.current = new AIEngine(config.difficulty);
       startNewGame(config.difficulty, config.matchMode, questionsRes.data.questions);
     } catch (error) {
@@ -147,7 +150,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
         category: 'all'
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -183,7 +186,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
     if (aiEngineRef.current) {
       aiEngineRef.current.clearMemory();
     }
-    
+
     answersRef.current = [];
     turnStartTimeRef.current = Date.now();
 
@@ -229,7 +232,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
     if (opponentType === 'ai') {
       triggerAIMove();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTurn, isPreviewActive, isGameOver, isWaitingForFlipBack, isAIThinking]);
 
   // ─── CORE FLIP LOGIC (pure function, uses refs) ─────────────────────────
@@ -312,6 +315,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
           if (allMatched) {
             setIsGameOver(true);
             isGameOverRef.current = true;
+            // Only show celebration if player strictly won
+            if (player1ScoreRef.current > player2ScoreRef.current) {
+              setShowCelebration(true);
+            } else {
+              setShowResults(true);
+            }
           } else if (activeTurnRef.current === 'player2') {
             // Player 2 / AI keeps turn on match, make next move after delay
             // Fix double-trigger: just reset isAIThinking after a delay and let useEffect trigger it.
@@ -422,11 +431,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
 
 
 
-  // ─── ACCURACY ────────────────────────────────────────────────────────────
-  const calculateAccuracy = () => {
-    if (player1Flips === 0) return 100;
-    return Math.round((player1CorrectFlips / player1Flips) * 100);
-  };
 
   // ─── LABELS ──────────────────────────────────────────────────────────────
   const p1Label = opponentType === 'local' ? 'اللاعب 1' : 'أنت (البطل)';
@@ -434,8 +438,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
     opponentType === 'ai'
       ? 'حكيم الروبوت 🤖'
       : opponentType === 'local'
-      ? 'اللاعب 2'
-      : opponentName || 'يبحث...';
+        ? 'اللاعب 2'
+        : opponentName || 'يبحث...';
 
   // Determine if player can click cards right now
   const playerCanClick = !isGameOver
@@ -453,12 +457,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
           let answersToSubmit = answersRef.current;
           // Fallback if player did literally nothing and AI solved the whole game
           if (answersToSubmit.length === 0) {
-             const firstCard = deckRef.current[0];
-             answersToSubmit = [{
-               questionId: parseInt(firstCard.pairId, 10),
-               selectedAnswer: "No Answer Provided",
-               timeTaken: 1
-             }];
+            const firstCard = deckRef.current[0];
+            answersToSubmit = [{
+              questionId: parseInt(firstCard.pairId, 10),
+              selectedAnswer: "No Answer Provided",
+              timeTaken: 1
+            }];
           }
           await apiRef.current.submitAnswers(apiSessionId, answersToSubmit);
           const completeRes = await apiRef.current.completeSession(apiSessionId);
@@ -470,6 +474,20 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
       submitAndComplete();
     }
   }, [isGameOver, apiSessionId]);
+
+  // ─── ENDGAME HANDLERS ────────────────────────────────────────────────────
+  const handleCelebrationComplete = () => {
+    setShowCelebration(false);
+    setShowResults(true);
+  };
+
+  const handleRetry = () => {
+    setShowResults(false);
+    setIsGameOver(false);
+    isGameOverRef.current = false;
+    setIsConfigured(false);
+    handleConfigSelected({ difficulty, matchMode, opponent: 'ai', category });
+  };
 
   // ─── RENDER ──────────────────────────────────────────────────────────────
   if (apiLoading) {
@@ -487,8 +505,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
     <div className="game-screen w-full h-full flex flex-col items-center relative bg-sky-gradient">
       {/* Animated background clouds */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
-        <div className="cloud-slow animate-cloud-move-slow" style={{ position:'absolute', top:'15%', left:'-8%', width:'18rem', height:'4rem' }} />
-        <div className="cloud-fast animate-cloud-move-fast" style={{ position:'absolute', top:'60%', right:'-12%', width:'24rem', height:'5rem' }} />
+        <div className="cloud-slow animate-cloud-move-slow" style={{ position: 'absolute', top: '15%', left: '-8%', width: '18rem', height: '4rem' }} />
+        <div className="cloud-fast animate-cloud-move-fast" style={{ position: 'absolute', top: '60%', right: '-12%', width: '24rem', height: '5rem' }} />
       </div>
 
       {/* ─ 3. Game Board ─ */}
@@ -524,7 +542,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
             {/* Turn Status - now handled by new header */}
           </div>
 
-          {/* ── Cards Area (fills all remaining space) ── */}
           <div className="game-cards-area">
             <div className={`cards-fit-grid ${difficulty === 'hard' ? 'hard-mode' : 'normal-mode'}`}>
               {deck.map((card, idx) => (
@@ -558,20 +575,21 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
         </div>
       )}
 
-      {/* ─ 4. Result Modal ─ */}
-      {isGameOver && (
-        <ResultModal
-          player1Name={p1Label}
-          player2Name={p2Label}
-          player1Score={player1Score}
-          player2Score={player2Score}
-          accuracy={calculateAccuracy()}
-          onRestart={() => {
-            setIsConfigured(false);
-            handleConfigSelected({ difficulty, matchMode, opponent: 'ai', category });
-          }}
-          onExit={onBackToWelcome}
-          apiRewards={apiRewards}
+      {/* ─ 4. Endgame Overlays ─ */}
+      <Celebration
+        isVisible={showCelebration}
+        onComplete={handleCelebrationComplete}
+      />
+
+      {showResults && (
+        <ResultsPanel
+          score={player1Score}
+          totalScore={deck.length / 2}
+          correctAnswers={player1CorrectFlips}
+          wrongAnswers={player1Flips - player1CorrectFlips}
+          coins={apiRewards?.coins || (player1Score * 2)}
+          onRetry={handleRetry}
+          onBack={onBackToWelcome}
         />
       )}
     </div>

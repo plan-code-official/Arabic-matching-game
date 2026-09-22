@@ -91,7 +91,7 @@ export class GameAPI {
     const res = await fetch(`${API_BASE}/games/sessions/${sessionId}/submit-answers`, {
       method: 'POST',
       headers: this.headers,
-      body: JSON.stringify(answers),
+      body: JSON.stringify({ answers }),
     });
     if (!res.ok) throw new Error('Failed to submit answers');
     return res.json();

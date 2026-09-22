@@ -27,7 +27,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   // Calculate XP based on 10 points per question
-  const xpCount = totalQuestions * 10;
+  const xpCount = totalQuestions;
 
   return (
     <div className="welcome-screen-new">
