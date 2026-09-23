@@ -1513,6 +1513,7 @@ body {
     padding: 0 50px 0 10px;
     gap: 10px;
     justify-content: space-between;
+    flex-wrap: nowrap;
   }
 
   .header-avatar-left {
@@ -1520,15 +1521,13 @@ body {
   }
 
   .header-avatar-right {
-    order: 2;
+    order: 3;
   }
 
   .header-turn-indicator,
   .preview-center-console {
-    order: 3;
-    width: 100%;
-    min-width: 100%;
-    margin-top: 4px;
+    order: 2;
+    margin-top: 0;
   }
 
   .header-turn-indicator span {
