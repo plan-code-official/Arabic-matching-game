@@ -20,7 +20,7 @@ interface GameScreenProps {
 }
 
 
-const CHAT_EMOJIS = ['😊', '😮', '😎', '🔥', '👏', '💔', '🤖', '👍'];
+
 
 export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonId, token }) => {
   // Configuration State
@@ -54,8 +54,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
   const [showResults, setShowResults] = useState(false);
   const [isAIThinking, setIsAIThinking] = useState(false);
 
-  // Emojis reaction states
-  const [p1Emoji, setP1Emoji] = useState('');
 
   // API State
   const [apiSessionId, setApiSessionId] = useState<string | null>(null);
@@ -421,12 +419,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
   }, [executeFlipCore]);
 
 
-  // ─── EMOJI REACTIONS ─────────────────────────────────────────────────────
-  const handleEmojiClick = (emoji: string) => {
-    setP1Emoji(emoji);
-    audio.playClick();
-    setTimeout(() => setP1Emoji(''), 3000);
-  };
 
 
 
@@ -525,7 +517,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
                 totalPairs={deck.length / 2}
                 streakCount={streakCount}
                 onExit={onBackToWelcome}
-                p1Emoji={p1Emoji}
               />
             )}
 
@@ -552,23 +543,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
                   disabled={!playerCanClick || card.isMatched || card.isFlipped}
                   isAIPreview={isPreviewActive}
                 />
-              ))}
-            </div>
-          </div>
-
-          {/* ── Emoji Bar ── */}
-          <div className="emoji-bar-compact">
-            <span className="emoji-bar-compact__label">تفاعل</span>
-            <div className="emoji-bar-compact__buttons">
-              {CHAT_EMOJIS.slice(0, 4).map((emoji) => (
-                <button
-                  key={emoji}
-                  id={`emoji-btn-${emoji}`}
-                  onClick={() => handleEmojiClick(emoji)}
-                  className="emoji-btn"
-                >
-                  {emoji}
-                </button>
               ))}
             </div>
           </div>

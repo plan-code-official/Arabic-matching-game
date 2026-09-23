@@ -13,7 +13,6 @@ interface ScoreHUDProps {
   totalPairs: number;
   streakCount: number;
   onExit: () => void;
-  p1Emoji?: string;
 }
 
 export const ScoreHUD: React.FC<ScoreHUDProps> = ({
@@ -22,8 +21,7 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
   player1Score,
   player2Score,
   currentTurn,
-  onExit,
-  p1Emoji
+  onExit
 }) => {
   const isP1Turn = currentTurn === 'player1';
 
@@ -32,11 +30,6 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
       <div className="header-main-group">
         {/* Right Avatar (Player 1) - Placed first so it renders on the Right in RTL */}
         <div className="header-avatar-container header-avatar-right">
-          {p1Emoji && (
-            <div className="header-speech-bubble bubble-right">
-              {p1Emoji}
-            </div>
-          )}
           <div className="avatar-circle avatar-circle-orange">
             <img src={user1} alt={player1Name} className="header-avatar-img" />
           </div>
@@ -49,15 +42,9 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
         {/* Center Turn Indicator */}
         <div className="header-turn-indicator">
           {isP1Turn ? (
-            <>
-              <img src={user1} alt="turn" className="turn-icon" />
-              <span>{player1Name} Turn</span>
-            </>
+            <img src={user1} alt="turn" className="turn-icon" />
           ) : (
-            <>
-              <img src={user2} alt="turn" className="turn-icon" />
-              <span>{player2Name} Turn</span>
-            </>
+            <img src={user2} alt="turn" className="turn-icon" />
           )}
         </div>
 
