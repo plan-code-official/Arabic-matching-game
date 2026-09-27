@@ -21,6 +21,7 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
   player2Name,
   player1Score,
   player2Score,
+  currentTurn,
   onExit
 }) => {
   return (
@@ -53,6 +54,13 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
             <img src={user2} alt={player2Name} />
           </div>
         </div>
+      </div>
+      
+      {/* Center: Turn Indicator */}
+      <div className="absolute left-1/2 -translate-x-1/2 flex justify-center items-center h-full pointer-events-none">
+         <span className={`turn-indicator-badge rounded-full font-extrabold text-white shadow-lg transition-colors ${currentTurn === 'player1' ? 'bg-orange-500 shadow-orange-500/50' : 'bg-sky-500 shadow-sky-500/50'}`}>
+            {currentTurn === 'player1' ? 'دورك' : 'دور حكيم'}
+         </span>
       </div>
     </div>
   );

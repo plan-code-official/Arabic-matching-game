@@ -2577,6 +2577,13 @@ body {
   object-fit: contain;
 }
 
+.turn-indicator-badge {
+  padding: 0.5rem 1.5rem;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  white-space: nowrap;
+}
+
 /* ═══════════════════════════════════════════════
    RESPONSIVE & SMALL SCREEN / MOBILE STYLES
 ═══════════════════════════════════════════════ */
@@ -2615,6 +2622,12 @@ body {
   .header-score-pill img {
     width: 18px;
     height: 18px;
+  }
+
+  .turn-indicator-badge {
+    padding: 0.4rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
   }
 
   .preview-center-console {
@@ -2706,9 +2719,9 @@ body {
 
 .welcome-header-new {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  right: 20px;
+  top: clamp(30px, 5vh, 60px);
+  left: clamp(16px, 4vw, 35px);
+  right: clamp(16px, 4vw, 40px);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2851,10 +2864,11 @@ body {
   .welcome-header-new {
     position: relative;
     top: 0;
-    right: 0;
+    width: 100%;
+    margin-top: 30px;
     margin-bottom: 10px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
   }
 
   .welcome-body-new {
@@ -2920,6 +2934,12 @@ body {
     bottom: -18px;
   }
 
+  .turn-indicator-badge {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.85rem;
+    line-height: 1.25rem;
+  }
+
   .card-word-label {
     font-size: clamp(0.7rem, 2.5vw, 1.2rem);
     text-shadow: none;
@@ -2930,6 +2950,49 @@ body {
     font-size: 0.55rem;
     padding: 1px 4px;
     letter-spacing: 0;
+  }
+}
+
+@media (max-width: 290px) {
+  .game-header-bar {
+    padding: 2px 4px;
+    gap: 2px;
+  }
+
+  .header-side {
+    gap: 2px;
+  }
+
+  .header-exit-btn img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .header-avatar-circle {
+    width: 24px;
+    height: 24px;
+  }
+
+  .header-avatar-circle img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .header-score-pill {
+    padding: 1px 4px;
+    font-size: 0.75rem;
+    gap: 2px;
+  }
+
+  .header-score-pill img {
+    width: 14px;
+    height: 14px;
+  }
+
+  .turn-indicator-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    line-height: 1;
   }
 }
 

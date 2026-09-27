@@ -9,11 +9,11 @@
   justify-content: center;
   align-items: center;
   gap: clamp(6px, 1.4vw, 18px);
-  padding: clamp(8px, 1.5vh, 16px) clamp(8px, 2.5vw, 24px);
+  padding: clamp(32px, 5vh, 64px) clamp(16px, 3vw, 32px);
   overflow: hidden;
   background: radial-gradient(circle at 50% 45%, rgba(0, 196, 230, 0.2), transparent 43%), rgba(3, 16, 29, 0.5);
   backdrop-filter: blur(3px) saturate(1.1);
-  font-family: "Cairo", "Segoe UI", sans-serif;
+  font-family: "Lateef", "Segoe UI", sans-serif;
 }
 
 .results-overlay {
@@ -81,7 +81,7 @@
 .results-score-card__label {
   margin: 0;
   color: #84ebff;
-  font-family: Cairo, sans-serif;
+  font-family: Lateef, sans-serif;
   font-size: clamp(1rem, 2.2vw, 1.9rem);
   font-weight: 900;
 }
@@ -89,7 +89,7 @@
 .results-score-card strong {
   color: #fff;
   direction: ltr;
-  font-family: Cairo, sans-serif;
+  font-family: Lateef, sans-serif;
   font-size: clamp(1.55rem, 3.8vw, 3.1rem);
   font-weight: 900;
 }
@@ -128,7 +128,7 @@
 }
 
 .results-stat-card strong {
-  font-family: Cairo, sans-serif;
+  font-family: Lateef, sans-serif;
   font-size: clamp(1rem, 4.4vw, 3.65rem);
   line-height: 1;
   font-weight: 900;
@@ -137,7 +137,7 @@
 .results-stat-card span {
   margin-top: clamp(2px, 0.8vh, 8px);
   color: #f9d00f;
-  font-family: Cairo, sans-serif;
+  font-family: Lateef, sans-serif;
   font-size: clamp(0.6rem, 2.7vw, 2.1rem);
   font-weight: 900;
   line-height: 1;
@@ -170,7 +170,7 @@
   cursor: pointer;
   background: transparent;
   color: #fff;
-  font-family: Cairo, sans-serif;
+  font-family: Lateef, sans-serif;
   font-size: clamp(1.35rem, 2.7vw, 2.2rem);
   font-weight: 900;
   transition: transform 180ms ease, filter 180ms ease;

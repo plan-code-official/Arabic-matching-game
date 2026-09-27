@@ -522,6 +522,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     handleConfigSelected({ difficulty, matchMode, opponent: 'ai', category });
   };
 
+  const handleExitSite = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = '/';
+    }
+  };
+
   // ─── RENDER ──────────────────────────────────────────────────────────────
   if (apiLoading) {
     return (
@@ -557,7 +565,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 pairsMatched={deck.filter((c) => c.isMatched).length / 2}
                 totalPairs={deck.length / 2}
                 streakCount={streakCount}
-                onExit={onBackToWelcome}
+                onExit={handleExitSite}
               />
             )}
 
@@ -617,7 +625,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           wrongAnswers={player2Score}
           coins={apiRewards?.coins || (player1Score * 2)}
           onRetry={handleRetry}
-          onBack={onBackToWelcome}
+          onBack={handleExitSite}
         />
       )}
     </div>
