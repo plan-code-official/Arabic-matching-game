@@ -2578,9 +2578,9 @@ body {
 }
 
 .turn-indicator-badge {
-  padding: 0.5rem 1.5rem;
-  font-size: 1.25rem;
-  line-height: 1.75rem;
+  padding: clamp(0.3rem, 1vw, 0.6rem) clamp(1rem, 3vw, 2rem);
+  font-size: clamp(1.5rem, 5vw, 2.4rem);
+  line-height: 1.2;
   white-space: nowrap;
 }
 
@@ -2625,9 +2625,9 @@ body {
   }
 
   .turn-indicator-badge {
-    padding: 0.4rem 1rem;
-    font-size: 1rem;
-    line-height: 1.5rem;
+    padding: 0.4rem 1.2rem;
+    font-size: clamp(1.2rem, 4.5vw, 1.8rem);
+    line-height: 1.2;
   }
 
   .preview-center-console {
@@ -2686,13 +2686,20 @@ body {
     /* 24 cards = 4 cols x 6 rows on mobile */
   }
 
+  .card-word-content {
+    width: 98%;
+    height: 98%;
+    padding: 4px;
+    gap: 4px;
+  }
+
   .card-word-label {
-    font-size: clamp(1rem, 3.5vw, 1.8rem);
-    line-height: 1.1;
+    font-size: clamp(1.4rem, 6.5vw, 2.8rem);
+    line-height: 1;
   }
 
   .card-word-hint {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     padding: 2px 6px;
   }
 }
@@ -2935,19 +2942,27 @@ body {
   }
 
   .turn-indicator-badge {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.85rem;
-    line-height: 1.25rem;
+    padding: 0.3rem 0.8rem;
+    font-size: clamp(1rem, 4vw, 1.4rem);
+    line-height: 1.2;
+  }
+
+  .card-word-content {
+    width: 100%;
+    height: 100%;
+    padding: 2px;
+    gap: 0px;
+    border-radius: 8px;
   }
 
   .card-word-label {
-    font-size: clamp(0.7rem, 2.5vw, 1.2rem);
+    font-size: clamp(1.2rem, 5vw, 1.8rem);
     text-shadow: none;
-    /* Shadow on tiny screens can make it muddy */
+    line-height: 1;
   }
 
   .card-word-hint {
-    font-size: 0.55rem;
+    font-size: 0.65rem;
     padding: 1px 4px;
     letter-spacing: 0;
   }
@@ -2990,9 +3005,9 @@ body {
   }
 
   .turn-indicator-badge {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.7rem;
-    line-height: 1;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.95rem;
+    line-height: 1.2;
   }
 }
 
