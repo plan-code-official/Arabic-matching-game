@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { LogOut } from 'lucide-react';
 import { audio } from '../utils/audio';
-import user1 from "../assets/user1.png"
-import user2 from "../assets/user2.png"
+import user1 from "../assets/user1.png";
+import user2 from "../assets/user2.png";
+import ExitButtonImg from '../assets/ExitButton.svg';
 
 interface PreviewTimerHeaderProps {
   duration: number;
@@ -21,44 +21,49 @@ export const PreviewTimerHeader: React.FC<PreviewTimerHeaderProps> = ({ duration
   }, [timeLeft]);
 
   return (
-    <div className="preview-timer-header">
-      <div className="header-main-group">
-        {/* Right Avatar - Player/Tiger - Placed first so it renders on the Right in RTL */}
-        <div className="header-avatar-container header-avatar-right">
-          <img src={user1} alt="Player" className="preview-avatar" />
-        </div>
-
-        {/* Center Console */}
-        <div className="preview-center-console">
-          <div className="preview-bar-container">
-            <span className="preview-time-text">{timeLeft}s</span>
-            <div className="preview-progress-track">
-              <div
-                className="preview-progress-fill"
-                style={{ width: `${percentage}%`, transition: 'width 1s linear' }}
-              />
-            </div>
-          </div>
-          <button
-            onClick={() => { audio.playClick(); onSkip(); }}
-            className="preview-ready-btn"
-          >
-            Ready
+    <div className="game-header-bar">
+      {/* Right Side: Exit Button & Player 1 (Orange/User) */}
+      <div className="header-side header-side-right">
+        {onExit && (
+          <button onClick={onExit} className="header-exit-btn">
+            <img src={ExitButtonImg} alt="Exit" />
           </button>
-        </div>
+        )}
 
-        {/* Left Avatar - Hakim/Robot - Placed last so it renders on the Left in RTL */}
-        <div className="header-avatar-container header-avatar-left">
-          <img src={user2} alt="Hakim" className="preview-avatar" />
+        <div className="header-player">
+          <div className="header-avatar-circle circle-orange">
+            <img src={user1} alt="Player" />
+          </div>
         </div>
       </div>
 
-      {/* Action Button - Exit */}
-      {onExit && (
-        <button onClick={onExit} className="preview-action-btn header-logout-btn">
-          <LogOut size={20} color="#1e293b" />
+      {/* Center Console */}
+      <div className="preview-center-console">
+        <div className="preview-bar-container">
+          <span className="preview-time-text">{timeLeft}s</span>
+          <div className="preview-progress-track">
+            <div
+              className="preview-progress-fill"
+              style={{ width: `${percentage}%`, transition: 'width 1s linear' }}
+            />
+          </div>
+        </div>
+        <button
+          onClick={() => { audio.playClick(); onSkip(); }}
+          className="preview-ready-btn"
+        >
+          ابداء
         </button>
-      )}
+      </div>
+
+      {/* Left Side: Player 2 (Blue/AI) */}
+      <div className="header-side header-side-left">
+        <div className="header-player">
+          <div className="header-avatar-circle circle-blue">
+            <img src={user2} alt="Hakim" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

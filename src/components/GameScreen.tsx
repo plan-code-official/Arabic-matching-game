@@ -17,12 +17,17 @@ interface GameScreenProps {
   onBackToWelcome: () => void;
   lessonId: string;
   token: string;
+  initialQuestions: ApiQuestion[];
+  initialSessionId: string;
 }
 
-
-
-
-export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonId, token }) => {
+export const GameScreen: React.FC<GameScreenProps> = ({ 
+  onBackToWelcome, 
+  lessonId, 
+  token,
+  initialQuestions,
+  initialSessionId
+}) => {
   // Configuration State
   const [isConfigured, setIsConfigured] = useState(false);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
@@ -53,6 +58,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
   const [showCelebration, setShowCelebration] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isAIThinking, setIsAIThinking] = useState(false);
+  const [feedbackModal, setFeedbackModal] = useState<'right' | 'wrong' | null>(null);
 
 
   // API State
@@ -119,16 +125,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
 
     setApiLoading(true);
     try {
-      const api = apiRef.current;
-      const [questionsRes, sessionRes] = await Promise.all([
-        api.getQuestions(lessonId),
-        api.startSession(lessonId)
-      ]);
+      if (!apiSessionId && initialSessionId) {
+        setApiSessionId(initialSessionId);
+        aiEngineRef.current = new AIEngine(config.difficulty);
+        startNewGame(config.difficulty, config.matchMode, initialQuestions);
+      } else {
+        const api = apiRef.current;
+        const [questionsRes, sessionRes] = await Promise.all([
+          api.getQuestions(lessonId),
+          api.startSession(lessonId)
+        ]);
 
-      setApiSessionId(sessionRes.data.id);
+        setApiSessionId(sessionRes.data.id);
 
-      aiEngineRef.current = new AIEngine(config.difficulty);
-      startNewGame(config.difficulty, config.matchMode, questionsRes.data.questions);
+        aiEngineRef.current = new AIEngine(config.difficulty);
+        startNewGame(config.difficulty, config.matchMode, questionsRes.data.questions);
+      }
     } catch (error) {
       console.error(error);
       alert('فشل الاتصال بالخادم. يرجى المحاولة مرة أخرى.');
@@ -273,93 +285,122 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
         });
       }
 
-      if (currentDeck[firstIdx].pairId === currentDeck[secondIdx].pairId) {
-        // ─── MATCH ───
-        setTimeout(() => {
-          const matchedDeck = [...deckRef.current];
-          matchedDeck[firstIdx] = { ...matchedDeck[firstIdx], isMatched: true, isFlipped: false };
-          matchedDeck[secondIdx] = { ...matchedDeck[secondIdx], isMatched: true, isFlipped: false };
-          setDeck([...matchedDeck]);
-          deckRef.current = [...matchedDeck];
+      const isMatch = currentDeck[firstIdx].pairId === currentDeck[secondIdx].pairId;
+      const isPlayerTurn = activeTurnRef.current === 'player1';
 
-          audio.playSuccess();
+      const handleMatch = () => {
+        const matchedDeck = [...deckRef.current];
+        matchedDeck[firstIdx] = { ...matchedDeck[firstIdx], isMatched: true, isFlipped: false };
+        matchedDeck[secondIdx] = { ...matchedDeck[secondIdx], isMatched: true, isFlipped: false };
+        setDeck([...matchedDeck]);
+        deckRef.current = [...matchedDeck];
 
-          if (activeTurnRef.current === 'player1') {
-            const newScore = player1ScoreRef.current + 1;
-            setPlayer1Score(newScore);
-            player1ScoreRef.current = newScore;
-            const newCorrect = player1CorrectFlipsRef.current + 1;
-            setPlayer1CorrectFlips(newCorrect);
-            player1CorrectFlipsRef.current = newCorrect;
+        if (!isPlayerTurn) audio.playSuccess();
+
+        if (activeTurnRef.current === 'player1') {
+          const newScore = player1ScoreRef.current + 1;
+          setPlayer1Score(newScore);
+          player1ScoreRef.current = newScore;
+          const newCorrect = player1CorrectFlipsRef.current + 1;
+          setPlayer1CorrectFlips(newCorrect);
+          player1CorrectFlipsRef.current = newCorrect;
+        } else {
+          const newScore = player2ScoreRef.current + 1;
+          setPlayer2Score(newScore);
+          player2ScoreRef.current = newScore;
+        }
+
+        const newStreak = streakCountRef.current + 1;
+        setStreakCount(newStreak);
+        streakCountRef.current = newStreak;
+
+        setFlippedIndices([]);
+        flippedIndicesRef.current = [];
+
+        if (opponentTypeRef.current === 'ai' && aiEngineRef.current) {
+          aiEngineRef.current.forget(matchedDeck[firstIdx].uniqueId);
+          aiEngineRef.current.forget(matchedDeck[secondIdx].uniqueId);
+        }
+
+        const allMatched = matchedDeck.every((c) => c.isMatched);
+        if (allMatched) {
+          setIsGameOver(true);
+          isGameOverRef.current = true;
+          // Only show celebration if player strictly won
+          if (player1ScoreRef.current > player2ScoreRef.current) {
+            setShowCelebration(true);
           } else {
-            const newScore = player2ScoreRef.current + 1;
-            setPlayer2Score(newScore);
-            player2ScoreRef.current = newScore;
+            setShowResults(true);
           }
-
-          const newStreak = streakCountRef.current + 1;
-          setStreakCount(newStreak);
-          streakCountRef.current = newStreak;
-
-          setFlippedIndices([]);
-          flippedIndicesRef.current = [];
-
-          if (opponentTypeRef.current === 'ai' && aiEngineRef.current) {
-            aiEngineRef.current.forget(matchedDeck[firstIdx].uniqueId);
-            aiEngineRef.current.forget(matchedDeck[secondIdx].uniqueId);
-          }
-
-          const allMatched = matchedDeck.every((c) => c.isMatched);
-          if (allMatched) {
-            setIsGameOver(true);
-            isGameOverRef.current = true;
-            // Only show celebration if player strictly won
-            if (player1ScoreRef.current > player2ScoreRef.current) {
-              setShowCelebration(true);
-            } else {
-              setShowResults(true);
+        } else if (activeTurnRef.current === 'player2') {
+          setTimeout(() => {
+            if (!isGameOverRef.current) {
+              setIsAIThinking(false);
             }
-          } else if (activeTurnRef.current === 'player2') {
-            // Player 2 / AI keeps turn on match, make next move after delay
-            // Fix double-trigger: just reset isAIThinking after a delay and let useEffect trigger it.
-            setTimeout(() => {
-              if (!isGameOverRef.current) {
-                setIsAIThinking(false);
-              }
-            }, 1000);
-          }
-          // Player1 keeps turn on match - no action needed, just reset flipped
-          turnStartTimeRef.current = Date.now();
-        }, 600);
-      } else {
-        // ─── MISMATCH ───
+          }, 1000);
+        }
+        turnStartTimeRef.current = Date.now();
+      };
+
+      const handleMismatch = () => {
+        const resetDeck = [...deckRef.current];
+        resetDeck[firstIdx] = { ...resetDeck[firstIdx], isFlipped: false };
+        resetDeck[secondIdx] = { ...resetDeck[secondIdx], isFlipped: false };
+        setDeck([...resetDeck]);
+        deckRef.current = [...resetDeck];
+
+        const newStreak = 0;
+        setStreakCount(newStreak);
+        streakCountRef.current = newStreak;
+        setFlippedIndices([]);
+        flippedIndicesRef.current = [];
+        
+        setIsAIThinking(false);
+
+        // Switch turn
+        const nextTurn = activeTurnRef.current === 'player1' ? 'player2' : 'player1';
+        setActiveTurn(nextTurn);
+        activeTurnRef.current = nextTurn;
+        turnStartTimeRef.current = Date.now();
+
+        if (!isPlayerTurn) audio.playFailure();
+      };
+
+      if (isPlayerTurn) {
         setIsWaitingForFlipBack(true);
         isWaitingForFlipBackRef.current = true;
 
         setTimeout(() => {
-          const resetDeck = [...deckRef.current];
-          resetDeck[firstIdx] = { ...resetDeck[firstIdx], isFlipped: false };
-          resetDeck[secondIdx] = { ...resetDeck[secondIdx], isFlipped: false };
-          setDeck([...resetDeck]);
-          deckRef.current = [...resetDeck];
+          setFeedbackModal(isMatch ? 'right' : 'wrong');
+          if (isMatch) audio.playSuccess();
+          else audio.playFailure();
 
-          const newStreak = 0;
-          setStreakCount(newStreak);
-          streakCountRef.current = newStreak;
-          setFlippedIndices([]);
-          flippedIndicesRef.current = [];
-          setIsWaitingForFlipBack(false);
-          isWaitingForFlipBackRef.current = false;
-          setIsAIThinking(false);
+          setTimeout(() => {
+            setFeedbackModal(null);
+            setTimeout(() => {
+              if (isMatch) handleMatch();
+              else handleMismatch();
+              
+              setIsWaitingForFlipBack(false);
+              isWaitingForFlipBackRef.current = false;
+            }, 500); // Delay after modal is removed
+          }, 1000); // Modal duration
+        }, 500); // Delay before modal shows
 
-          // Switch turn
-          const nextTurn = activeTurnRef.current === 'player1' ? 'player2' : 'player1';
-          setActiveTurn(nextTurn);
-          activeTurnRef.current = nextTurn;
-          turnStartTimeRef.current = Date.now();
-
-          audio.playFailure();
-        }, 1200);
+      } else {
+        if (isMatch) {
+          setTimeout(() => {
+            handleMatch();
+          }, 600);
+        } else {
+          setIsWaitingForFlipBack(true);
+          isWaitingForFlipBackRef.current = true;
+          setTimeout(() => {
+            handleMismatch();
+            setIsWaitingForFlipBack(false);
+            isWaitingForFlipBackRef.current = false;
+          }, 1200);
+        }
       }
     }
   }, []);
@@ -549,7 +590,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
         </div>
       )}
 
-      {/* ─ 4. Endgame Overlays ─ */}
+      {/* ─ 4. Feedback Modal ─ */}
+      {feedbackModal && (
+        <div className="feedback-modal-overlay">
+          <div className={`feedback-modal-box ${feedbackModal === 'right' ? 'feedback-modal-correct' : 'feedback-modal-incorrect'}`}>
+            <span className="feedback-modal-text">
+              {feedbackModal === 'right' ? 'أحسنت! ✔' : 'خطأ ✖'}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ─ 5. Endgame Overlays ─ */}
       {showCelebration && (
         <CelebrationWrapper
           isVisible={showCelebration}
@@ -561,8 +613,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onBackToWelcome, lessonI
         <ResultsPanelWrapper
           score={player1Score}
           totalScore={deck.length / 2}
-          correctAnswers={player1CorrectFlips}
-          wrongAnswers={player1Flips - player1CorrectFlips}
+          correctAnswers={player1Score}
+          wrongAnswers={player2Score}
           coins={apiRewards?.coins || (player1Score * 2)}
           onRetry={handleRetry}
           onBack={onBackToWelcome}

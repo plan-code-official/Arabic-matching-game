@@ -1,8 +1,9 @@
 import React from 'react';
-import { LogOut } from 'lucide-react';
-import user1 from "../assets/user1.png"
-import user2 from "../assets/user2.png"
-import coin from "../assets/daddcoin.webp"
+import user1 from "../assets/user1.png";
+import user2 from "../assets/user2.png";
+import coin from "../assets/daddcoin.webp";
+import ExitButtonImg from '../assets/ExitButton.svg';
+
 interface ScoreHUDProps {
   player1Name: string;
   player2Name: string;
@@ -20,50 +21,39 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
   player2Name,
   player1Score,
   player2Score,
-  currentTurn,
   onExit
 }) => {
-  const isP1Turn = currentTurn === 'player1';
-
   return (
-    <div className="new-game-header">
-      <div className="header-main-group">
-        {/* Right Avatar (Player 1) - Placed first so it renders on the Right in RTL */}
-        <div className="header-avatar-container header-avatar-right">
-          <div className="avatar-circle avatar-circle-orange">
-            <img src={user1} alt={player1Name} className="header-avatar-img" />
+    <div className="game-header-bar">
+      {/* Right Side: Exit Button & Player 1 (Orange/User) */}
+      <div className="header-side header-side-right">
+        <button onClick={onExit} className="header-exit-btn">
+          <img src={ExitButtonImg} alt="Exit" />
+        </button>
+        
+        <div className="header-player">
+          <div className="header-avatar-circle circle-orange">
+            <img src={user1} alt={player1Name} />
           </div>
-          <div className="avatar-score-badge">
+          <div className="header-score-pill">
             <img src={coin} alt="Coin" />
             <span>{player1Score}</span>
           </div>
         </div>
+      </div>
 
-        {/* Center Turn Indicator */}
-        <div className="header-turn-indicator">
-          {isP1Turn ? (
-            <img src={user1} alt="turn" className="turn-icon" />
-          ) : (
-            <img src={user2} alt="turn" className="turn-icon" />
-          )}
-        </div>
-
-        {/* Left Avatar (Player 2 / Hakim) - Placed last so it renders on the Left in RTL */}
-        <div className="header-avatar-container header-avatar-left">
-          <div className="avatar-circle avatar-circle-blue">
-            <img src={user2} alt={player2Name} className="header-avatar-img" />
-          </div>
-          <div className="avatar-score-badge badge-blue">
+      {/* Left Side: Player 2 (Blue/AI) */}
+      <div className="header-side header-side-left">
+        <div className="header-player">
+          <div className="header-score-pill">
             <img src={coin} alt="Coin" />
             <span>{player2Score}</span>
           </div>
+          <div className="header-avatar-circle circle-blue">
+            <img src={user2} alt={player2Name} />
+          </div>
         </div>
       </div>
-
-      {/* Action Button */}
-      <button onClick={onExit} className="preview-action-btn header-logout-btn">
-        <LogOut size={20} color="#1e293b" />
-      </button>
     </div>
   );
 };

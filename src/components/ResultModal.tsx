@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Trophy, Home, RotateCcw } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { audio } from '../utils/audio';
+import retryIcon from '../assets/retry.png';
+import exitIcon from '../assets/ExitButton.svg';
 
 interface ResultModalProps {
   player1Name: string;
@@ -21,7 +23,6 @@ interface ResultModalProps {
 
 export const ResultModal: React.FC<ResultModalProps> = ({
   player1Name,
-  player2Name,
   player1Score,
   player2Score,
   accuracy,
@@ -67,31 +68,10 @@ export const ResultModal: React.FC<ResultModalProps> = ({
             ? 'تعادل رائع ولعب مميز!' 
             : isP1Winner 
               ? `فوز مذهل لـ ${player1Name}! 🎉` 
-              : `فوز مستحق لـ ${player2Name}! 🏆`}
+              : 'حاول مره اخري'}
         </h2>
 
-        {/* Scores Comparison */}
-        <div className="grid grid-cols-2 gap-4 my-4 bg-amber-950/5 p-3 rounded-xl border border-amber-950/10">
-          <div className="flex flex-col items-center">
-            <span className="text-xs font-bold text-amber-800">{player1Name}</span>
-            <span className="text-3xl font-black text-amber-600 mt-1">{player1Score}</span>
-            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1.5 ${
-              isP1Winner ? 'bg-emerald-100 text-emerald-800' : isTie ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-400'
-            }`}>
-              {isP1Winner ? 'الفائز 👑' : isTie ? 'تعادل' : 'خسارة'}
-            </span>
-          </div>
-
-          <div className="flex flex-col items-center border-r border-amber-950/10">
-            <span className="text-xs font-bold text-amber-800">{player2Name}</span>
-            <span className="text-3xl font-black text-slate-700 mt-1">{player2Score}</span>
-            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1.5 ${
-              !isP1Winner && !isTie ? 'bg-emerald-100 text-emerald-800' : isTie ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-400'
-            }`}>
-              {!isP1Winner && !isTie ? 'الفائز 👑' : isTie ? 'تعادل' : 'خسارة'}
-            </span>
-          </div>
-        </div>
+        {/* Removed Scores Comparison per user request */}
 
         {/* Accuracy and detailed stats */}
         <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-xs font-bold text-slate-700">
@@ -124,27 +104,27 @@ export const ResultModal: React.FC<ResultModalProps> = ({
         </p>
 
         {/* Control Buttons */}
-        <div className="flex flex-col gap-3 z-10 relative">
-          <button
-            onClick={() => {
-              audio.playClick();
-              onRestart();
-            }}
-            className="w-full py-3 btn-restart text-white font-black text-lg rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-md flex items-center justify-center gap-2 cursor-pointer border-b-4 border-emerald-700"
-          >
-            <RotateCcw className="w-5 h-5 stroke-[3]" />
-            <span>العب مجدداً</span>
-          </button>
-
+        <div className="flex justify-center items-center gap-8 mt-4 z-10 relative">
           <button
             onClick={() => {
               audio.playClick();
               onExit();
             }}
-            className="w-full py-2.5 btn-menu text-white font-bold text-md rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-md flex items-center justify-center gap-2 cursor-pointer border-b-4 border-amber-700"
+            className="flex flex-col items-center justify-center gap-2 hover:scale-110 active:scale-95 transition-transform"
           >
-            <Home className="w-4 h-4 stroke-[2.5]" />
-            <span>الخروج للقائمة الرئيسية</span>
+            <img src={exitIcon} alt="Exit" className="w-16 h-16 drop-shadow-md" />
+            <span className="font-black text-amber-900 text-lg">اخرج</span>
+          </button>
+
+          <button
+            onClick={() => {
+              audio.playClick();
+              onRestart();
+            }}
+            className="flex flex-col items-center justify-center gap-2 hover:scale-110 active:scale-95 transition-transform"
+          >
+            <img src={retryIcon} alt="Retry" className="w-16 h-16 drop-shadow-md" />
+            <span className="font-black text-amber-900 text-lg">ثانيه</span>
           </button>
         </div>
         

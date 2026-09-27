@@ -38,19 +38,20 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: clamp(18px, 4vh, 52px) clamp(18px, 4vw, 82px) clamp(18px, 3.2vh, 34px);
-  gap: clamp(10px, 2vw, 28px);
+  padding: clamp(10px, 4vh, 52px) clamp(8px, 4vw, 82px) clamp(10px, 3.2vh, 34px);
+  gap: clamp(6px, 2vw, 28px);
   transform: translateY(clamp(-40px, -4vh, -12px));
 }
 
-.results-panel__title {
+.results-panel__title-text {
   display: block;
-  width: min(66%, 620px);
-  max-height: 100%;
-  object-fit: contain;
-  margin-top: clamp(2px, 0.4vh, 6px);
-  position: relative;
-  top: clamp(4px, 0.6vh, 10px);
+  font-size: clamp(1.5rem, 6vw, 4rem);
+  font-weight: 900;
+  color: #ef4444;
+  text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 0 4px 8px rgba(0,0,0,0.3);
+  text-align: center;
+  margin-top: clamp(10px, 2vh, 20px);
+  margin-bottom: clamp(10px, 2vh, 20px);
   animation: resultsItemIn 440ms 120ms ease-out both;
 }
 
@@ -98,7 +99,7 @@
   max-width: min(90%, 820px);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(10px, 2vw, 32px);
+  gap: clamp(4px, 1.4vw, 32px);
   direction: ltr;
   animation: resultsItemIn 510ms 270ms ease-out both;
 }
@@ -128,7 +129,7 @@
 
 .results-stat-card strong {
   font-family: Cairo, sans-serif;
-  font-size: clamp(1.75rem, 4.4vw, 3.65rem);
+  font-size: clamp(1rem, 4.4vw, 3.65rem);
   line-height: 1;
   font-weight: 900;
 }
@@ -137,7 +138,7 @@
   margin-top: clamp(2px, 0.8vh, 8px);
   color: #f9d00f;
   font-family: Cairo, sans-serif;
-  font-size: clamp(1rem, 2.7vw, 2.1rem);
+  font-size: clamp(0.6rem, 2.7vw, 2.1rem);
   font-weight: 900;
   line-height: 1;
 }
@@ -175,7 +176,7 @@
   transition: transform 180ms ease, filter 180ms ease;
 }
 
-.results-action img {
+.results-action > img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -195,16 +196,22 @@
   top: clamp(-10px, -0.7vh, -4px);
 }
 
-.results-action__group {
-  display: inline-flex;
+.flex-column-center {
+  display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  direction: rtl;
+  gap: clamp(2px, 1.5vw, 8px);
+  position: relative;
+  z-index: 2;
 }
 
-.results-action__exit-icon {
-  font-family: sans-serif;
-  line-height: 1;
+.results-action img.results-action__custom-icon {
+  position: relative;
+  width: clamp(20px, 5vw, 36px) !important;
+  height: clamp(20px, 5vw, 36px) !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 
 .results-action--back { color: #ff5d5c; }

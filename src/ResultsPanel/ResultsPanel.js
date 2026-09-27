@@ -1,10 +1,11 @@
 import './ResultsPanel.css';
 import panelFrame from './assets/banal.png';
-import celebrationTitle from './assets/good.png';
 import coinsImage from './assets/money.png';
 import correctImage from './assets/right.png';
 import wrongImage from './assets/wrong.png';
 import buttonFrame from './assets/boutton.png';
+import retryIconImg from '../assets/retry.png';
+import exitIconImg from '../assets/ExitButton.svg';
 
 const numberValue = (value) => {
   const parsed = Number(value);
@@ -35,18 +36,8 @@ export class ResultsPanel {
     const content = document.createElement("div");
     content.className = "results-panel__content";
 
-    const titleImg = document.createElement("img");
-    titleImg.className = "results-panel__title";
-    titleImg.src = celebrationTitle;
-    titleImg.alt = "أحسنت";
-
-    const scoreCard = document.createElement("div");
-    scoreCard.className = "results-score-card";
-    const scoreLabel = document.createElement("span");
-    scoreLabel.className = "results-score-card__label";
-    scoreLabel.textContent = "الدَّرَجَةُ";
-    this.scoreText = document.createElement("strong");
-    scoreCard.append(scoreLabel, this.scoreText);
+    this.titleText = document.createElement("h2");
+    this.titleText.className = "results-panel__title-text";
 
     const stats = document.createElement("div");
     stats.className = "results-stats";
@@ -79,7 +70,7 @@ export class ResultsPanel {
     wrongCard.append(wrongImg, this.wrongText);
 
     stats.append(correctCard, coinsCard, wrongCard);
-    content.append(titleImg, scoreCard, stats);
+    content.append(this.titleText, stats);
     panel.append(content);
 
     const actions = document.createElement("div");
@@ -94,14 +85,13 @@ export class ResultsPanel {
     backBtnImg.alt = "";
     backBtnImg.setAttribute("aria-hidden", "true");
     const backGrp = document.createElement("span");
-    backGrp.className = "results-action__group";
+    backGrp.className = "results-action__group flex-column-center";
+    const backIcon = document.createElement("img");
+    backIcon.className = "results-action__custom-icon";
+    backIcon.src = exitIconImg;
     const backTxt = document.createElement("span");
-    backTxt.textContent = "ارْجِعْ";
-    const backIcon = document.createElement("span");
-    backIcon.className = "results-action__exit-icon";
-    backIcon.setAttribute("aria-hidden", "true");
-    backIcon.textContent = "⎋";
-    backGrp.append(backTxt, backIcon);
+    backTxt.textContent = "اخرج";
+    backGrp.append(backIcon, backTxt);
     backBtn.append(backBtnImg, backGrp);
 
     const retryBtn = document.createElement("button");
@@ -112,12 +102,15 @@ export class ResultsPanel {
     retryBtnImg.src = buttonFrame;
     retryBtnImg.alt = "";
     retryBtnImg.setAttribute("aria-hidden", "true");
-    const retryIcon = document.createElement("span");
-    retryIcon.setAttribute("aria-hidden", "true");
-    retryIcon.textContent = "↻";
+    const retryGrp = document.createElement("span");
+    retryGrp.className = "results-action__group flex-column-center";
+    const retryIcon = document.createElement("img");
+    retryIcon.className = "results-action__custom-icon";
+    retryIcon.src = retryIconImg;
     const retryTxt = document.createElement("span");
-    retryTxt.textContent = "ثانِيَةً";
-    retryBtn.append(retryBtnImg, retryIcon, retryTxt);
+    retryTxt.textContent = "ثانيه";
+    retryGrp.append(retryIcon, retryTxt);
+    retryBtn.append(retryBtnImg, retryGrp);
 
     actions.append(backBtn, retryBtn);
     screen.append(panel, actions);
@@ -131,10 +124,17 @@ export class ResultsPanel {
     const wrong = numberValue(data.wrongAnswers);
     const earnedCoins = numberValue(data.coins);
 
-    this.scoreText.textContent = `${finalScore}/${maximumScore}`;
     this.correctText.textContent = correct;
     this.wrongText.textContent = wrong;
     this.coinsText.textContent = `+${earnedCoins}`;
+
+    if (correct > wrong) {
+      this.titleText.textContent = "أحسنت";
+      this.titleText.style.color = "#22c55e";
+    } else {
+      this.titleText.textContent = "حاول مره اخري";
+      this.titleText.style.color = "#ef4444";
+    }
 
     this.root.appendChild(this.el);
   }
