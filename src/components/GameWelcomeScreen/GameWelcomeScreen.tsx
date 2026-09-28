@@ -1,5 +1,4 @@
-﻿import React from 'react';
-import './GameWelcomeScreen.css';
+﻿import './GameWelcomeScreen.css';
 
 interface GameWelcomeScreenProps {
   backgroundImage?: string;
