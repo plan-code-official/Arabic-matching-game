@@ -1432,6 +1432,11 @@ body {
   transform: scale(0.94);
 }
 
+/* Keep a revealed card facing up while tapping it to replay its audio. */
+.memory-card-slot:not(.disabled-card):active .memory-card-inner.flipped {
+  transform: rotateY(180deg) scale(1.02);
+}
+
 .memory-card-inner.flipped:not(.memory-card-slot.disabled-card:active .memory-card-inner) {
   /* keep rotated when flipped */
 }
