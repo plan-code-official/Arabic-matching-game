@@ -1,11 +1,11 @@
 import './ResultsPanel.css';
 import panelFrame from './assets/banal.png';
+import celebrationTitle from './assets/good.png';
 import coinsImage from './assets/money.png';
 import correctImage from './assets/right.png';
 import wrongImage from './assets/wrong.png';
-import buttonFrame from './assets/boutton.png';
-import retryIconImg from '../assets/retry.png';
-import exitIconImg from '../assets/ExitButton.svg';
+import exitButtonImg from '../assets/Exit.png';
+import retryButtonImg from '../assets/Retry.png';
 
 const numberValue = (value) => {
   const parsed = Number(value);
@@ -32,12 +32,25 @@ export class ResultsPanel {
     const panel = document.createElement("div");
     panel.className = "results-panel";
     panel.style.setProperty("--results-panel-image", `url(${panelFrame})`);
+    const panelFrameImg = document.createElement("img");
+    panelFrameImg.className = "results-panel__frame";
+    panelFrameImg.src = panelFrame;
+    panelFrameImg.alt = "";
+    panelFrameImg.setAttribute("aria-hidden", "true");
+    panel.append(panelFrameImg);
 
     const content = document.createElement("div");
     content.className = "results-panel__content";
 
+    this.titleImg = document.createElement("img");
+    this.titleImg.className = "results-panel__title";
+    this.titleImg.src = celebrationTitle;
+    this.titleImg.alt = "أحسنت";
+
     this.titleText = document.createElement("h2");
-    this.titleText.className = "results-panel__title-text";
+    this.titleText.className = "results-panel__fail-title";
+    this.titleText.textContent = "حاول مرة أخرى!";
+    this.titleText.style.display = "none";
 
     const stats = document.createElement("div");
     stats.className = "results-stats";
@@ -70,7 +83,7 @@ export class ResultsPanel {
     wrongCard.append(wrongImg, this.wrongText);
 
     stats.append(correctCard, coinsCard, wrongCard);
-    content.append(this.titleText, stats);
+    content.append(this.titleImg, this.titleText, stats);
     panel.append(content);
 
     const actions = document.createElement("div");
@@ -81,36 +94,22 @@ export class ResultsPanel {
     backBtn.type = "button";
     backBtn.onclick = () => { if (this.onBack) this.onBack(); };
     const backBtnImg = document.createElement("img");
-    backBtnImg.src = buttonFrame;
-    backBtnImg.alt = "";
+    backBtnImg.className = "results-action__bg";
+    backBtnImg.src = exitButtonImg;
+    backBtnImg.alt = "خروج";
     backBtnImg.setAttribute("aria-hidden", "true");
-    const backGrp = document.createElement("span");
-    backGrp.className = "results-action__group flex-column-center";
-    const backIcon = document.createElement("img");
-    backIcon.className = "results-action__custom-icon";
-    backIcon.src = exitIconImg;
-    const backTxt = document.createElement("span");
-    backTxt.textContent = "اخرج";
-    backGrp.append(backIcon, backTxt);
-    backBtn.append(backBtnImg, backGrp);
+    backBtn.append(backBtnImg);
 
     const retryBtn = document.createElement("button");
     retryBtn.className = "results-action results-action--retry";
     retryBtn.type = "button";
     retryBtn.onclick = () => { if (this.onRetry) this.onRetry(); };
     const retryBtnImg = document.createElement("img");
-    retryBtnImg.src = buttonFrame;
-    retryBtnImg.alt = "";
+    retryBtnImg.className = "results-action__bg";
+    retryBtnImg.src = retryButtonImg;
+    retryBtnImg.alt = "إعادة المحاولة";
     retryBtnImg.setAttribute("aria-hidden", "true");
-    const retryGrp = document.createElement("span");
-    retryGrp.className = "results-action__group flex-column-center";
-    const retryIcon = document.createElement("img");
-    retryIcon.className = "results-action__custom-icon";
-    retryIcon.src = retryIconImg;
-    const retryTxt = document.createElement("span");
-    retryTxt.textContent = "ثانيه";
-    retryGrp.append(retryIcon, retryTxt);
-    retryBtn.append(retryBtnImg, retryGrp);
+    retryBtn.append(retryBtnImg);
 
     actions.append(backBtn, retryBtn);
     screen.append(panel, actions);
@@ -118,8 +117,6 @@ export class ResultsPanel {
   }
 
   show(data = {}) {
-    const finalScore = numberValue(data.score);
-    const maximumScore = numberValue(data.totalScore) || 100;
     const correct = numberValue(data.correctAnswers);
     const wrong = numberValue(data.wrongAnswers);
     const earnedCoins = numberValue(data.coins);
@@ -128,13 +125,10 @@ export class ResultsPanel {
     this.wrongText.textContent = wrong;
     this.coinsText.textContent = `+${earnedCoins}`;
 
-    if (correct > wrong) {
-      this.titleText.textContent = "أحسنت";
-      this.titleText.style.color = "#22c55e";
-    } else {
-      this.titleText.textContent = "حاول مره اخري";
-      this.titleText.style.color = "#ef4444";
-    }
+    const totalAnswers = correct + wrong;
+    const isSuccess = totalAnswers > 0 && correct / totalAnswers >= 0.5;
+    this.titleImg.style.display = isSuccess ? "block" : "none";
+    this.titleText.style.display = isSuccess ? "none" : "block";
 
     this.root.appendChild(this.el);
   }

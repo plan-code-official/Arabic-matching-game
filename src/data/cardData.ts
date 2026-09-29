@@ -29,6 +29,7 @@ export interface Card {
   isFlipped: boolean;
   isMatched: boolean;
   customImage?: string; // URL for API driven images
+  audioUrl?: string | null;
 }
 
 export interface DifficultyConfig {
@@ -162,6 +163,7 @@ export function generateDeckFromApi(
     const qText = item.question;
     const optionText = item.options?.[0]?.text || item.correctAnswer || qText;
     const qImage = item.imageUrl || item.options?.[0]?.imageUrl || undefined;
+    const qAudio = item.audioUrl || item.options?.[0]?.audioUrl || null;
 
     if (matchMode === 'image-word') {
       // 1 Image Card
@@ -174,6 +176,7 @@ export function generateDeckFromApi(
         isFlipped: false,
         isMatched: false,
         customImage: qImage
+        ,audioUrl: qAudio
       });
       // 1 Word Card
       deck.push({
@@ -196,6 +199,7 @@ export function generateDeckFromApi(
         isFlipped: false,
         isMatched: false,
         customImage: qImage
+        ,audioUrl: qAudio
       });
       deck.push({
         uniqueId: `${qId}-img2`,

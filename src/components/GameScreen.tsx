@@ -12,6 +12,7 @@ import type { ApiSubmitAnswer, ApiQuestion } from '../utils/api';
 import { AIEngine } from '../utils/aiEngine';
 import { MultiplayerService } from '../utils/multiplayer';
 import { audio } from '../utils/audio';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface GameScreenProps {
   onBackToWelcome: () => void;
@@ -535,7 +536,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     return (
       <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white font-bold text-xl gap-4">
         <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-        جاري تحميل اللعبة...
+        تحميل
       </div>
     );
   }
@@ -600,11 +601,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
       {/* ─ 4. Feedback Modal ─ */}
       {feedbackModal && (
-        <div className="feedback-modal-overlay">
-          <div className={`feedback-modal-box ${feedbackModal === 'right' ? 'feedback-modal-correct' : 'feedback-modal-incorrect'}`}>
-            <span className="feedback-modal-text">
-              {feedbackModal === 'right' ? 'أحسنت! ✔' : 'خطأ ✖'}
-            </span>
+        <div className="answer-feedback-overlay feedback-modal-overlay">
+          <div className={`answer-feedback-card ${feedbackModal === 'right' ? 'answer-feedback-card--success' : 'answer-feedback-card--wrong'}`} dir="rtl">
+            {feedbackModal === 'right' ? <CheckCircle2 className="answer-feedback__icon" aria-hidden="true" /> : <XCircle className="answer-feedback__icon" aria-hidden="true" />}
+            <span className="answer-feedback__text">{feedbackModal === 'right' ? 'أحسنت!' : 'خطأ'}</span>
           </div>
         </div>
       )}

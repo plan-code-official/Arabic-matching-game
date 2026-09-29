@@ -6,6 +6,7 @@ export interface ApiQuestion {
   options: {
     text: string;
     imageUrl?: string;
+    audioUrl?: string | null;
   }[];
   correctAnswer: string;
   points: number;
