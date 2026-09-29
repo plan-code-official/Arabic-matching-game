@@ -4,8 +4,8 @@ import celebrationTitle from './assets/good.png';
 import coinsImage from './assets/money.png';
 import correctImage from './assets/right.png';
 import wrongImage from './assets/wrong.png';
-import exitButtonImg from '../assets/Exit.png';
-import retryButtonImg from '../assets/Retry.png';
+import exitButtonImg from '../assets/exit.png';
+import retryButtonImg from '../assets/retry.png';
 
 const numberValue = (value) => {
   const parsed = Number(value);
