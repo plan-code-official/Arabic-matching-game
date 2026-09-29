@@ -6,7 +6,7 @@ import correctImage from './assets/right.png';
 import wrongImage from './assets/wrong.png';
 import exitButtonImg from '../assets/exit.png';
 import retryButtonImg from '../assets/retry.png';
-
+ 
 const numberValue = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : 0;
