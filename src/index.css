@@ -3037,7 +3037,7 @@ body {
 .answer-feedback-card--wrong { color:#ff5d5c; border-color:#ff5d5c; text-shadow:0 0 16px rgba(255,93,92,.55); }
 .answer-feedback__icon { width:1.15em; height:1.15em; flex:0 0 auto; }
 .answer-feedback__text { display:inline-block; }
-.card-audio-button { width:32px; height:32px; display:grid; place-items:center; margin:8px auto 0; border:0; border-radius:50%; color:#fff; background:#0ea5e9; cursor:pointer; box-shadow:0 4px 10px rgba(14,165,233,.35); }
+.card-audio-button { position:relative; z-index:5; width:32px; height:32px; display:grid; place-items:center; margin:8px auto 0; border:0; border-radius:50%; color:#fff; background:#0ea5e9; cursor:pointer; pointer-events:auto; box-shadow:0 4px 10px rgba(14,165,233,.35); }
 .card-audio-button svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .answer-feedback-card { direction: ltr; flex-direction: row; }
 .answer-feedback__text { direction: rtl; }

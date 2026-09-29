@@ -590,7 +590,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   key={card.uniqueId}
                   card={card}
                   onClick={() => handleCardClick(idx)}
-                  disabled={!playerCanClick || card.isMatched || card.isFlipped}
+                  disabled={!playerCanClick}
                   isAIPreview={isPreviewActive}
                 />
               ))}

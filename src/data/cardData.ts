@@ -186,7 +186,8 @@ export function generateDeckFromApi(
         itemId: qText,
         content: optionText,
         isFlipped: false,
-        isMatched: false
+        isMatched: false,
+        audioUrl: qAudio
       });
     } else {
       // image-image
@@ -198,8 +199,8 @@ export function generateDeckFromApi(
         content: optionText,
         isFlipped: false,
         isMatched: false,
-        customImage: qImage
-        ,audioUrl: qAudio
+        customImage: qImage,
+        audioUrl: qAudio
       });
       deck.push({
         uniqueId: `${qId}-img2`,
