@@ -7,7 +7,7 @@ import QuestionCoin from '../assets/QuestionCoin.png';
 import QuestionNumberBg from '../assets/QuestionNumber.png';
 import DescriptionImg from '../assets/description.png';
 import StartButtonBg from '../assets/start_transparent.png';
-import ExitButtonBg from '../assets/exit_transparent.png';
+import ExitButtonBg from '../assets/Exit1.png';
 import DaddCoin from '../assets/daddcoin.webp';
 
 import { audio } from '../utils/audio';
