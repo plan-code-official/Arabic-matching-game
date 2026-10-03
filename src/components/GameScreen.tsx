@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 import { ScoreHUD } from './ScoreHUD';
 import { CelebrationWrapper } from './CelebrationWrapper';
-import { ResultsPanelWrapper } from './ResultsPanelWrapper';
+import ResultsPanel from '../ResultsPanel/ResultsPanel';
 import { MemoryCard } from './MemoryCard';
 import { PreviewTimerHeader } from './PreviewTimerHeader';
 import { DIFFICULTIES, generateDeckFromApi } from '../data/cardData';
@@ -618,7 +618,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       )}
 
       {showResults && (
-        <ResultsPanelWrapper
+        <ResultsPanel
           score={player1Score}
           totalScore={deck.length / 2}
           correctAnswers={player1Score}
