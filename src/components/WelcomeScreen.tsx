@@ -54,7 +54,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const isReady = totalQuestions > 0 && !!sessionId && !error;
 
   return (
-    <div className="welcome-screen-new">
     <GameWelcomeScreen
       statsBgImage={QuestionNumberBg}
       statLeftIcon={QuestionCoin}
@@ -63,14 +62,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       statRightValue={totalQuestions}
       statRightIcon={DaddCoin}
       statRightAlt="Points"
-      heroImage={DescriptionImg}
-      heroAlt="How to Play"
+      descriptionImage={DescriptionImg}
       startButtonImage={StartButtonBg}
       exitButtonImage={ExitButtonBg}
       onStart={handleStart}
       isLoading={isLoading}
       isReady={isReady}
-    /> 
-    </div>
+    />
   );
 };

@@ -1,4 +1,5 @@
-﻿import './GameWelcomeScreen.css';
+import React from 'react';
+import './GameWelcomeScreen.css';
 
 interface GameWelcomeScreenProps {
   backgroundImage?: string;
@@ -9,8 +10,7 @@ interface GameWelcomeScreenProps {
   statRightValue?: string | number;
   statRightIcon?: string;
   statRightAlt?: string;
-  heroImage: string;
-  heroAlt?: string;
+  descriptionImage: string;
   startButtonImage: string;
   exitButtonImage: string;
   onStart: () => void;
@@ -23,13 +23,12 @@ export default function GameWelcomeScreen({
   backgroundImage,
   statsBgImage,
   statLeftIcon,
-  statLeftAlt = 'Stat',
+  statLeftAlt = 'عدد الأسئلة',
   statLeftValue,
   statRightValue,
   statRightIcon,
-  statRightAlt = 'Points',
-  heroImage,
-  heroAlt = 'How to Play',
+  statRightAlt = 'النقاط',
+  descriptionImage,
   startButtonImage,
   exitButtonImage,
   onStart,
@@ -37,75 +36,74 @@ export default function GameWelcomeScreen({
   isLoading = false,
   isReady = true,
 }: GameWelcomeScreenProps) {
-  const handleExit = onExit || (() => {
-    if (window.history.length > 1) {
+  const startDisabled = isLoading || !isReady;
+
+  const handleArtLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const image = event.currentTarget;
+    const stage = image.closest<HTMLElement>('.gws-stage');
+    if (stage && image.naturalWidth && image.naturalHeight) {
+      stage.style.setProperty('--gws-art-ratio', String(image.naturalWidth / image.naturalHeight));
+    }
+  };
+
+  const handleExit = () => {
+    if (onExit) {
+      onExit();
+    } else if (window.history.length > 1) {
       window.history.back();
     } else {
       window.location.href = '/';
     }
-  });
-
-  const startDisabled = isLoading || !isReady;
+  };
 
   return (
     <div
       className="gws-screen"
-      style={backgroundImage ? { backgroundImage: `url(${backgroundImage})` } : {}}
+      dir="rtl"
+      style={backgroundImage ? { backgroundImage: `url(${backgroundImage})` } : undefined}
     >
-
-      {/* HEADER: Stats Badge */}
-      <header className="gws-header">
-        <div
-          className="gws-stats-bg"
-          style={{ backgroundImage: `url(${statsBgImage})` }}
-        >
-          {statLeftIcon && (
-            <img src={statLeftIcon} alt={statLeftAlt} className="gws-stat-icon" />
-          )}
-          {statLeftValue !== undefined && (
-            <span className="gws-stat-text">{statLeftValue}</span>
-          )}
+      <header className="gws-header" aria-label="إحصاءات اللعبة">
+        <div className="gws-stats-bg" style={{ backgroundImage: `url(${statsBgImage})` }}>
+          {statLeftIcon && <img src={statLeftIcon} alt={statLeftAlt} className="gws-stat-icon" />}
+          {statLeftValue !== undefined && <span className="gws-stat-text">{statLeftValue}</span>}
           {statRightValue !== undefined && (
             <>
-              <span className="gws-stat-text">=</span>
+              <span className="gws-stat-equals" aria-hidden="true">=</span>
               <span className="gws-stat-text gws-stat-text--yellow">{statRightValue}</span>
             </>
           )}
-          {statRightIcon && (
-            <img src={statRightIcon} alt={statRightAlt} className="gws-stat-icon" />
-          )}
+          {statRightIcon && <img src={statRightIcon} alt={statRightAlt} className="gws-stat-icon" />}
         </div>
       </header>
 
-      {/* BODY: Hero / Description Image */}
-      <main className="gws-body">
-        <img
-          src={heroImage}
-          alt={heroAlt}
-          className="gws-hero-img"
-        />
-      </main>
+      <main className="gws-main">
+        <div className="gws-stage">
+          <div className="gws-body">
+            <img
+              className="gws-description-art"
+              src={descriptionImage}
+              alt="شرح طريقة اللعب"
+              onLoad={handleArtLoad}
+            />
+          </div>
 
-      {/* FOOTER: Exit + Start Buttons */}
-      <footer className="gws-footer">
-        <div className="gws-footer-buttons">
-
-          {/* Exit button */}
-          <button className="gws-img-btn" onClick={handleExit}>
-            <img src={exitButtonImage} alt="Exit" />
-          </button>
-
-          {/* Start button */}
-          <button
-            className="gws-start-btn"
-            style={{ backgroundImage: `url(${startButtonImage})` }}
-            onClick={onStart}
-            disabled={startDisabled}
-          />
-
+          <footer className="gws-footer">
+            <div className="gws-footer-buttons">
+              <button className="gws-img-btn" type="button" onClick={handleExit} aria-label="خروج">
+                <img src={exitButtonImage} alt="" />
+              </button>
+              <button
+                className="gws-start-btn"
+                type="button"
+                style={{ backgroundImage: `url(${startButtonImage})` }}
+                onClick={onStart}
+                disabled={startDisabled}
+                aria-label={isLoading ? 'جارٍ التحميل' : 'ابدأ اللعبة'}
+              />
+            </div>
+          </footer>
         </div>
-      </footer>
-
+      </main>
     </div>
   );
 }

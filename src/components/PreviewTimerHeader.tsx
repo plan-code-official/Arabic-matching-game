@@ -52,7 +52,7 @@ export const PreviewTimerHeader: React.FC<PreviewTimerHeaderProps> = ({ duration
           onClick={() => { audio.playClick(); onSkip(); }}
           className="preview-ready-btn"
         >
-          ابداء
+          ابدأ
         </button>
       </div>
 

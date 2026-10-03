@@ -255,7 +255,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     currentDeck[clickedIdx] = { ...currentDeck[clickedIdx], isFlipped: true };
     setDeck([...currentDeck]);
     deckRef.current = [...currentDeck];
-    audio.playClick();
+    audio.playCardFlip();
 
     // AI observes the card
     if (opponentTypeRef.current === 'ai' && aiEngineRef.current) {

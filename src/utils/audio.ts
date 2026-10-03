@@ -1,6 +1,9 @@
+import cardsFlipSound from '../assets/cards.mp3';
+
 class AudioEngine {
   private ctx: AudioContext | null = null;
   private isMuted: boolean = false;
+  private cardFlipAudio: HTMLAudioElement | null = null;
 
   constructor() {}
 
@@ -38,6 +41,23 @@ class AudioEngine {
       osc.stop(ctx.currentTime + 0.1);
     } catch (e) {
       console.warn('Audio click failed', e);
+    }
+  }
+
+  playCardFlip() {
+    if (this.isMuted) return;
+
+    try {
+      if (!this.cardFlipAudio) {
+        this.cardFlipAudio = new Audio(cardsFlipSound);
+      }
+
+      this.cardFlipAudio.currentTime = 0;
+      void this.cardFlipAudio.play().catch((error) => {
+        console.warn('Card flip sound failed', error);
+      });
+    } catch (error) {
+      console.warn('Card flip sound failed', error);
     }
   }
 
