@@ -576,7 +576,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 duration={DIFFICULTIES[difficulty].previewTime}
                 timeLeft={previewTimeLeft}
                 onSkip={finishPreviewPhase}
-                onExit={onBackToWelcome}
+                onExit={handleExitSite}
               />
             )}
 
