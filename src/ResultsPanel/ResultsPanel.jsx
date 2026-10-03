@@ -6,7 +6,7 @@ import './ResultsPanel.css';
 import panelArt from '../assets/results-panel-empty.png';
 import celebrationTitle from './assets/good.png';
 import exitButtonImage from '../assets/Exit.png';
-import retryButtonImage from '../assets/Retry.png';
+import retryButtonImage from '../assets/retry.png';
 
 const numberValue = (value) => {
   const parsed = Number(value);
