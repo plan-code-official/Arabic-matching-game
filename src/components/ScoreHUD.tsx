@@ -15,6 +15,7 @@ interface ScoreHUDProps {
   streakCount: number;
   onExit: () => void;
   p1Emoji?: string;
+  p2Emoji?: string;
 }
 
 export const ScoreHUD: React.FC<ScoreHUDProps> = ({
@@ -24,7 +25,8 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
   player2Score,
   currentTurn,
   onExit,
-  p1Emoji
+  p1Emoji,
+  p2Emoji
 }) => {
   return (
     <div className="game-header-bar">
@@ -52,7 +54,7 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
 
       {/* Left Side: Player 2 (Blue/AI) */}
       <div className="header-side header-side-left">
-        <div className="header-player">
+        <div className="header-player" style={{ position: 'relative' }}>
           <div className="header-score-pill">
             <img src={coin} alt="Coin" />
             <span>{player2Score}</span>
@@ -60,6 +62,11 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
           <div className="header-avatar-circle circle-blue">
             <img src={user2} alt={player2Name} />
           </div>
+          {p2Emoji && (
+            <div className="emoji-bubble emoji-bubble-left">
+              {p2Emoji}
+            </div>
+          )}
         </div>
       </div>
       

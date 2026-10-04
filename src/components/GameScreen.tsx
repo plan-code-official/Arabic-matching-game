@@ -63,7 +63,39 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
   // Emoji State
   const [p1Emoji, setP1Emoji] = useState('');
-  const CHAT_EMOJIS = ['👍', '😂', '😲', '😎', '🎉'];
+  const [p2Emoji, setP2Emoji] = useState('');
+  const CHAT_EMOJIS = ['👍', '😂', '😲', '😎', '🎉', '🤔', '👏'];
+
+  const triggerAIEmoji = useCallback((situation: 'match' | 'fail' | 'userMatch' | 'userFail' | 'thinking') => {
+    if (opponentTypeRef.current !== 'ai') return;
+    
+    // Probabilistic reactions
+    let chance = 0.3;
+    if (situation === 'thinking') chance = 0.25;
+    else if (situation === 'match') chance = 0.5;
+    else if (situation === 'fail') chance = 0.25;
+    else if (situation === 'userMatch') chance = 0.4;
+    else if (situation === 'userFail') chance = 0.3;
+
+    if (Math.random() > chance) return;
+
+    let emojisToPick: string[] = [];
+    switch (situation) {
+      case 'thinking': emojisToPick = ['🤔', '😲']; break;
+      case 'match': emojisToPick = ['😎', '🎉', '👍']; break;
+      case 'fail': emojisToPick = ['😂', '😲', '🤔']; break;
+      case 'userMatch': emojisToPick = ['👏', '😲', '👍']; break;
+      case 'userFail': emojisToPick = ['😂', '😎']; break;
+    }
+
+    const emoji = emojisToPick[Math.floor(Math.random() * emojisToPick.length)];
+    // Random human-like delay
+    setTimeout(() => {
+      setP2Emoji(emoji);
+      audio.playClick();
+      setTimeout(() => setP2Emoji(''), 3000);
+    }, Math.random() * 800 + 400);
+  }, []);
 
 
   // API State
@@ -309,10 +341,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           const newCorrect = player1CorrectFlipsRef.current + 1;
           setPlayer1CorrectFlips(newCorrect);
           player1CorrectFlipsRef.current = newCorrect;
+          triggerAIEmoji('userMatch');
         } else {
           const newScore = player2ScoreRef.current + 1;
           setPlayer2Score(newScore);
           player2ScoreRef.current = newScore;
+          triggerAIEmoji('match');
         }
 
         const newStreak = streakCountRef.current + 1;
@@ -364,6 +398,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
         // Switch turn
         const nextTurn = activeTurnRef.current === 'player1' ? 'player2' : 'player1';
+        if (activeTurnRef.current === 'player1') {
+          triggerAIEmoji('userFail');
+        } else {
+          triggerAIEmoji('fail');
+        }
+        
         setActiveTurn(nextTurn);
         activeTurnRef.current = nextTurn;
         turnStartTimeRef.current = Date.now();
@@ -433,6 +473,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     if (isGameOverRef.current) return;
 
     setIsAIThinking(true);
+    triggerAIEmoji('thinking');
 
     const available = deckRef.current.filter((c) => !c.isMatched && !c.isFlipped);
     if (available.length < 2) {
@@ -579,6 +620,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 streakCount={streakCount}
                 onExit={handleExitSite}
                 p1Emoji={p1Emoji}
+                p2Emoji={p2Emoji}
               />
             )}
 
@@ -613,7 +655,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           <div className="emoji-bar-compact">
             <span className="emoji-bar-compact__label">تفاعل</span>
             <div className="emoji-bar-compact__buttons">
-              {CHAT_EMOJIS.slice(0, 4).map((emoji) => (
+              {CHAT_EMOJIS.map((emoji) => (
                 <button
                   key={emoji}
                   id={`emoji-btn-${emoji}`}
