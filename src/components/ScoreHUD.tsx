@@ -37,13 +37,12 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
         </button>
         
         <div className="header-player" style={{ position: 'relative' }}>
-          {p1Emoji && (
-            <div className="emoji-bubble emoji-bubble-right">
-              {p1Emoji}
-            </div>
-          )}
-          <div className="header-avatar-circle circle-orange">
-            <img src={user1} alt={player1Name} />
+          <div className="header-avatar-circle circle-orange flex items-center justify-center">
+            {p1Emoji ? (
+              <span className="text-3xl lg:text-4xl leading-none animate-bounce">{p1Emoji}</span>
+            ) : (
+              <img src={user1} alt={player1Name} />
+            )}
           </div>
           <div className="header-score-pill">
             <img src={coin} alt="Coin" />
@@ -59,14 +58,13 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
             <img src={coin} alt="Coin" />
             <span>{player2Score}</span>
           </div>
-          <div className="header-avatar-circle circle-blue">
-            <img src={user2} alt={player2Name} />
+          <div className="header-avatar-circle circle-blue flex items-center justify-center">
+            {p2Emoji ? (
+              <span className="text-3xl lg:text-4xl leading-none animate-bounce">{p2Emoji}</span>
+            ) : (
+              <img src={user2} alt={player2Name} />
+            )}
           </div>
-          {p2Emoji && (
-            <div className="emoji-bubble emoji-bubble-left">
-              {p2Emoji}
-            </div>
-          )}
         </div>
       </div>
       
