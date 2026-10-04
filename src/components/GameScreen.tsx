@@ -61,6 +61,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [feedbackModal, setFeedbackModal] = useState<'right' | 'wrong' | null>(null);
 
+  // Emoji State
+  const [p1Emoji, setP1Emoji] = useState('');
+  const CHAT_EMOJIS = ['👍', '😂', '😲', '😎', '🎉'];
+
 
   // API State
   const [apiSessionId, setApiSessionId] = useState<string | null>(null);
@@ -531,6 +535,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     }
   };
 
+  // ─── EMOJI REACTIONS ─────────────────────────────────────────────────────
+  const handleEmojiClick = (emoji: string) => {
+    setP1Emoji(emoji);
+    audio.playClick();
+    setTimeout(() => setP1Emoji(''), 3000);
+  };
+
   // ─── RENDER ──────────────────────────────────────────────────────────────
   if (apiLoading) {
     return (
@@ -567,6 +578,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 totalPairs={deck.length / 2}
                 streakCount={streakCount}
                 onExit={handleExitSite}
+                p1Emoji={p1Emoji}
               />
             )}
 
@@ -593,6 +605,23 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   disabled={!playerCanClick}
                   isAIPreview={isPreviewActive}
                 />
+              ))}
+            </div>
+          </div>
+
+          {/* ── Emoji Bar ── */}
+          <div className="emoji-bar-compact">
+            <span className="emoji-bar-compact__label">تفاعل</span>
+            <div className="emoji-bar-compact__buttons">
+              {CHAT_EMOJIS.slice(0, 4).map((emoji) => (
+                <button
+                  key={emoji}
+                  id={`emoji-btn-${emoji}`}
+                  onClick={() => handleEmojiClick(emoji)}
+                  className="emoji-btn"
+                >
+                  {emoji}
+                </button>
               ))}
             </div>
           </div>
