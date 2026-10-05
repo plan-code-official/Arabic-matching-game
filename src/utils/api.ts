@@ -1,4 +1,77 @@
-const API_BASE = 'https://learning-platform-1euu.onrender.com/api/v1/student';
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/v1`;
+
+let latestToken: string | null = null;
+
+export const refreshAccessToken = async (): Promise<string | null> => {
+    try {
+        let refreshRes = await fetch(`${API_BASE}/student/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: "{}"
+        });
+
+        if (!refreshRes.ok) {
+            refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: "{}"
+            });
+        }
+
+        if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            const newToken = refreshData?.data?.accessToken || refreshData?.data?.token || refreshData?.accessToken || refreshData?.token;
+            if (newToken) {
+                console.log("Token refreshed successfully.");
+                latestToken = newToken;
+
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('token')) urlParams.set('token', newToken);
+                if (urlParams.has('accesstoken')) urlParams.set('accesstoken', newToken);
+                const newUrl = window.location.pathname + '?' + urlParams.toString();
+                window.history.replaceState(null, '', newUrl);
+
+                return newToken;
+            }
+        } else {
+            console.error("Token refresh failed on both endpoints with status", refreshRes.status);
+        }
+    } catch (err) {
+        console.error("Error during token refresh", err);
+    }
+    return null;
+};
+
+const apiFetch = async (url: string, options: RequestInit = {}, initialToken: string | null) => {
+    if (!latestToken && initialToken) {
+        latestToken = initialToken;
+    }
+    // If we have neither, try to refresh first
+    if (!latestToken && !initialToken) {
+        await refreshAccessToken();
+    }
+
+    const currentToken = latestToken || initialToken;
+    const fetchOptions = { ...options };
+    if (currentToken) {
+        fetchOptions.headers = { ...(fetchOptions.headers || {}), Authorization: `Bearer ${currentToken}` };
+    }
+
+    let res = await fetch(url, fetchOptions);
+
+    if (res.status === 401) {
+        console.warn("401 Unauthorized encountered. Attempting to refresh token...");
+        const newToken = await refreshAccessToken();
+        if (newToken) {
+            fetchOptions.headers = { ...(fetchOptions.headers || {}), Authorization: `Bearer ${newToken}` };
+            res = await fetch(url, fetchOptions);
+        }
+    }
+    
+    return res;
+};
 
 export interface ApiQuestion {
   id: number;
@@ -66,43 +139,42 @@ export class GameAPI {
   private get headers() {
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.token}`,
+      'Accept': 'application/json',
     };
   }
 
   async getQuestions(lessonId: string): Promise<ApiGameResponse> {
-    const res = await fetch(`${API_BASE}/games/2/questions?lessonId=${lessonId}`, {
+    const res = await apiFetch(`${API_BASE}/student/games/2/questions?lessonId=${lessonId}`, {
       headers: this.headers,
-    });
+    }, this.token);
     if (!res.ok) throw new Error('Failed to fetch questions');
     return res.json();
   }
 
   async startSession(lessonId: string): Promise<ApiSessionStartResponse> {
-    // According to the prompt, we POST to create the session
-    const res = await fetch(`${API_BASE}/games/2/sessions?lessonId=${lessonId}`, {
+    const res = await apiFetch(`${API_BASE}/student/games/2/sessions?lessonId=${lessonId}`, {
       method: 'POST',
       headers: this.headers,
-    });
+    }, this.token);
     if (!res.ok) throw new Error('Failed to start session');
     return res.json();
   }
 
   async submitAnswers(sessionId: string, answers: ApiSubmitAnswer[]): Promise<any> {
-    const res = await fetch(`${API_BASE}/games/sessions/${sessionId}/submit-answers`, {
+    const res = await apiFetch(`${API_BASE}/student/games/sessions/${sessionId}/submit-answers`, {
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify({ answers }),
-    });
+    }, this.token);
     if (!res.ok) throw new Error('Failed to submit answers');
     return res.json();
   }
 
   async completeSession(sessionId: string): Promise<ApiCompleteResponse> {
-    const res = await fetch(`${API_BASE}/games/sessions/${sessionId}/complete`, {
+    const res = await apiFetch(`${API_BASE}/student/games/sessions/${sessionId}/complete`, {
       method: 'POST',
       headers: this.headers,
-    });
+    }, this.token);
     if (!res.ok) throw new Error('Failed to complete session');
     return res.json();
   }
