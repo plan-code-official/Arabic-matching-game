@@ -2,7 +2,7 @@ import celebrationRobots from '../Celebration/assets/celbr.png';
 import panelArt from '../assets/results-panel-empty.png';
 import celebrationTitle from '../ResultsPanel/assets/good.png';
 import exitButtonImage from '../assets/Exit1.png';
-import retryButtonImage from '../assets/Retry.png';
+import retryButtonImage from '../assets/retry.png';
 import fireworksSoundUrl from '../Celebration/fireworks.mp3';
 
 let isPreloaded = false;
