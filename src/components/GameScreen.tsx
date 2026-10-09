@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 import { ScoreHUD } from './ScoreHUD';
+import { EmojiModal } from './EmojiModal';
 import { CelebrationWrapper } from './CelebrationWrapper';
 import ResultsPanel from '../ResultsPanel/ResultsPanel';
 import { MemoryCard } from './MemoryCard';
@@ -13,6 +14,8 @@ import { AIEngine } from '../utils/aiEngine';
 import { MultiplayerService } from '../utils/multiplayer';
 import { audio } from '../utils/audio';
 import { CheckCircle2, XCircle } from 'lucide-react';
+import type { UserProfile } from '../utils/api';
+import { preloadCelebrationAndResultsAssets } from '../utils/preloadAssets';
 
 interface GameScreenProps {
   onBackToWelcome: () => void;
@@ -20,15 +23,21 @@ interface GameScreenProps {
   token: string;
   initialQuestions: ApiQuestion[];
   initialSessionId: string;
+  userProfile?: UserProfile | null;
 }
 
-export const GameScreen: React.FC<GameScreenProps> = ({ 
-  onBackToWelcome, 
-  lessonId, 
+export const GameScreen: React.FC<GameScreenProps> = ({
+  onBackToWelcome,
+  lessonId,
   token,
   initialQuestions,
-  initialSessionId
+  initialSessionId,
+  userProfile
 }) => {
+  useEffect(() => {
+    preloadCelebrationAndResultsAssets();
+  }, []);
+
   // Configuration State
   const [isConfigured, setIsConfigured] = useState(false);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
@@ -64,11 +73,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   // Emoji State
   const [p1Emoji, setP1Emoji] = useState('');
   const [p2Emoji, setP2Emoji] = useState('');
-  const CHAT_EMOJIS = ['👍', '😂', '😲', '😎', '🎉', '🤔', '👏'];
+  const [isEmojiModalOpen, setIsEmojiModalOpen] = useState(false);
 
   const triggerAIEmoji = useCallback((situation: 'match' | 'fail' | 'userMatch' | 'userFail' | 'thinking') => {
     if (opponentTypeRef.current !== 'ai') return;
-    
+
     // Probabilistic reactions
     let chance = 0.3;
     if (situation === 'thinking') chance = 0.25;
@@ -393,7 +402,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         streakCountRef.current = newStreak;
         setFlippedIndices([]);
         flippedIndicesRef.current = [];
-        
+
         setIsAIThinking(false);
 
         // Switch turn
@@ -403,7 +412,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         } else {
           triggerAIEmoji('fail');
         }
-        
+
         setActiveTurn(nextTurn);
         activeTurnRef.current = nextTurn;
         turnStartTimeRef.current = Date.now();
@@ -425,7 +434,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             setTimeout(() => {
               if (isMatch) handleMatch();
               else handleMismatch();
-              
+
               setIsWaitingForFlipBack(false);
               isWaitingForFlipBackRef.current = false;
             }, 500); // Delay after modal is removed
@@ -512,7 +521,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
 
   // ─── LABELS ──────────────────────────────────────────────────────────────
-  const p1Label = opponentType === 'local' ? 'اللاعب 1' : 'أنت (البطل)';
+  const p1Label = userProfile?.name || (opponentType === 'local' ? 'اللاعب 1' : 'أنت (البطل)');
   const p2Label =
     opponentType === 'ai'
       ? 'حكيم الروبوت 🤖'
@@ -545,7 +554,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           }
           await apiRef.current.submitAnswers(apiSessionId, answersToSubmit);
           const completeRes = await apiRef.current.completeSession(apiSessionId);
-          setApiRewards(completeRes.data);
+          console.log('Complete session response:', completeRes);
+          setApiRewards(completeRes?.data || completeRes);
         } catch (e) {
           console.error('API Error ending session', e);
         }
@@ -580,6 +590,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const handleEmojiClick = (emoji: string) => {
     setP1Emoji(emoji);
     audio.playClick();
+    if (mpServiceRef.current) {
+      mpServiceRef.current.sendEmoji(emoji);
+    }
     setTimeout(() => setP1Emoji(''), 3000);
   };
 
@@ -598,10 +611,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   return (
     <div className="game-screen w-full h-full flex flex-col items-center relative bg-sky-gradient">
       {/* Animated background clouds */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
+      {/* <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
         <div className="cloud-slow animate-cloud-move-slow" style={{ position: 'absolute', top: '15%', left: '-8%', width: '18rem', height: '4rem' }} />
         <div className="cloud-fast animate-cloud-move-fast" style={{ position: 'absolute', top: '60%', right: '-12%', width: '24rem', height: '5rem' }} />
-      </div>
+      </div> */}
 
       {/* ─ 3. Game Board ─ */}
       {isConfigured && (
@@ -621,6 +634,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 onExit={handleExitSite}
                 p1Emoji={p1Emoji}
                 p2Emoji={p2Emoji}
+                onOpenChat={() => setIsEmojiModalOpen(true)}
+                player1Image={userProfile?.avatarUrl || null}
+                player1Accessory={userProfile?.accessoryUrl || null}
               />
             )}
 
@@ -631,6 +647,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 timeLeft={previewTimeLeft}
                 onSkip={finishPreviewPhase}
                 onExit={handleExitSite}
+                playerImage={userProfile?.avatarUrl || null}
+                playerAccessory={userProfile?.accessoryUrl || null}
               />
             )}
 
@@ -650,27 +668,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
               ))}
             </div>
           </div>
-
-          {/* ── Emoji Bar ── */}
-          <div className="emoji-bar-compact">
-            <span className="emoji-bar-compact__label">تفاعل</span>
-            <div className="emoji-bar-compact__buttons">
-              {CHAT_EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  id={`emoji-btn-${emoji}`}
-                  onClick={() => handleEmojiClick(emoji)}
-                  className="emoji-btn"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 
-      {/* ─ 4. Feedback Modal ─ */}
+      {/* ─ 4. Emoji Reaction Modal ─ */}
+      <EmojiModal
+        isOpen={isEmojiModalOpen}
+        onClose={() => setIsEmojiModalOpen(false)}
+        onSelectEmoji={handleEmojiClick}
+      />
+
+      {/* ─ 5. Feedback Modal ─ */}
       {feedbackModal && (
         <div className="answer-feedback-overlay feedback-modal-overlay">
           <div className={`answer-feedback-card ${feedbackModal === 'right' ? 'answer-feedback-card--success' : 'answer-feedback-card--wrong'}`} dir="rtl">
@@ -680,7 +688,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         </div>
       )}
 
-      {/* ─ 5. Endgame Overlays ─ */}
+      {/* ─ 6. Endgame Overlays ─ */}
       {showCelebration && (
         <CelebrationWrapper
           isVisible={showCelebration}
@@ -694,7 +702,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           totalScore={deck.length / 2}
           correctAnswers={player1Score}
           wrongAnswers={Math.max(0, deck.length / 2 - player1Score)}
-          coins={apiRewards?.coins || (player1Score * 2)}
+          coins={
+            typeof apiRewards?.coins === 'number'
+              ? apiRewards.coins
+              : (typeof apiRewards?.data?.coins === 'number'
+                ? apiRewards.data.coins
+                : (apiRewards?.coins ?? apiRewards?.data?.coins ?? 0))
+          }
           onRetry={handleRetry}
           onBack={handleExitSite}
         />

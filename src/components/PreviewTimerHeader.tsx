@@ -9,9 +9,18 @@ interface PreviewTimerHeaderProps {
   timeLeft: number;
   onSkip: () => void;
   onExit?: () => void;
+  playerImage?: string | null;
+  playerAccessory?: string | null;
 }
 
-export const PreviewTimerHeader: React.FC<PreviewTimerHeaderProps> = ({ duration, timeLeft, onSkip, onExit }) => {
+export const PreviewTimerHeader: React.FC<PreviewTimerHeaderProps> = ({
+  duration,
+  timeLeft,
+  onSkip,
+  onExit,
+  playerImage,
+  playerAccessory
+}) => {
   const percentage = (timeLeft / duration) * 100;
 
   useEffect(() => {
@@ -31,8 +40,26 @@ export const PreviewTimerHeader: React.FC<PreviewTimerHeaderProps> = ({ duration
         )}
 
         <div className="header-player">
-          <div className="header-avatar-circle circle-orange">
-            <img src={user1} alt="Player" />
+          <div className="header-avatar-wrapper">
+            <div className="header-avatar-circle circle-orange">
+              <img
+                src={playerImage || user1}
+                alt="Player"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = user1;
+                }}
+              />
+            </div>
+            {playerAccessory && (
+              <img
+                src={playerAccessory}
+                alt="Frame"
+                className="header-avatar-frame"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            )}
           </div>
         </div>
       </div>
