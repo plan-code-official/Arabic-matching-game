@@ -1,7 +1,23 @@
 import React from 'react';
 
+export const EMOJI_TEXT_MAP: Record<string, string> = {
+  '👍': 'أحسنت!',
+  '👏': 'تصفيق',
+  '🎉': 'احتفال',
+  '😎': 'بطل!',
+  '😂': 'ضحكة',
+  '😲': 'واو!',
+  '🤔': 'أفكر',
+  '🔥': 'حماس',
+  '💪': 'قوي',
+  '❤️': 'إعجاب',
+  '⭐': 'ممتاز',
+  '⚡': 'سريع!',
+};
+
 interface Group944Props {
   emoji?: string;
+  text?: string;
   side?: 'right' | 'left';
   className?: string;
   style?: React.CSSProperties;
@@ -9,10 +25,13 @@ interface Group944Props {
 
 export default function Group944({
   emoji = '',
+  text,
   side = 'right',
   className = '',
   style
 }: Group944Props) {
+  const emojiText = text ?? (emoji ? EMOJI_TEXT_MAP[emoji] : '') ?? '';
+
   return (
     <div
       className={`group-944-container group-944-${side} ${className}`.trim()}
@@ -20,10 +39,14 @@ export default function Group944({
       data-name="Group 944"
       role="status"
       aria-live="polite"
+      dir="rtl"
     >
       {/* Rectangle 714: Speech bubble body with linear gradient */}
-      <div className="group-944-rectangle rounded-[16px] bg-linear-[175deg,#FFF2.38%,#0054A2816.94%]">
-        <span className="group-944-emoji">{emoji}</span>
+      <div className="group-944-rectangle rounded-[20px] bg-linear-[175deg,#FFF2.38%,#0054A2816.94%]">
+        <div className="group-944-content">
+          <span className="group-944-emoji">{emoji}</span>
+          {emojiText && <span className="group-944-text">{emojiText}</span>}
+        </div>
       </div>
 
       {/* Polygon 6: Speech bubble tail pointing towards the avatar */}

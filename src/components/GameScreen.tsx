@@ -380,12 +380,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           } else {
             setShowResults(true);
           }
-        } else if (activeTurnRef.current === 'player2') {
-          setTimeout(() => {
-            if (!isGameOverRef.current) {
-              setIsAIThinking(false);
-            }
-          }, 1000);
+        } else {
+          // Switch turn to the other player on every round (whether match or mismatch)
+          setIsAIThinking(false);
+          const nextTurn = activeTurnRef.current === 'player1' ? 'player2' : 'player1';
+          setActiveTurn(nextTurn);
+          activeTurnRef.current = nextTurn;
         }
         turnStartTimeRef.current = Date.now();
       };
