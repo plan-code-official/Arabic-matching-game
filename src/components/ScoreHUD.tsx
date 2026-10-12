@@ -4,6 +4,7 @@ import user1 from "../assets/user1.png";
 import user2 from "../assets/user2.png";
 import coin from "../assets/daddcoin.webp";
 import ExitButtonImg from '../assets/ExitButton.svg';
+import Group944 from './Group944';
 
 interface ScoreHUDProps {
   player1Name: string;
@@ -45,18 +46,17 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
         
         <div className="header-player">
           <div className="header-avatar-wrapper">
+            {/* Group 944 Speech Bubble for Player 1 (Right Side) */}
+            {p1Emoji && <Group944 emoji={p1Emoji} side="right" />}
+
             <div className="header-avatar-circle circle-orange">
-              {p1Emoji ? (
-                <span className="avatar-emoji-active">{p1Emoji}</span>
-              ) : (
-                <img
-                  src={player1Image || user1}
-                  alt={player1Name}
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = user1;
-                  }}
-                />
-              )}
+              <img
+                src={player1Image || user1}
+                alt={player1Name}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = user1;
+                }}
+              />
             </div>
             {player1Accessory && (
               <img
@@ -104,12 +104,13 @@ export const ScoreHUD: React.FC<ScoreHUDProps> = ({
             <img src={coin} alt="Coin" />
             <span>{player2Score}</span>
           </div>
-          <div className="header-avatar-circle circle-blue">
-            {p2Emoji ? (
-              <span className="avatar-emoji-active">{p2Emoji}</span>
-            ) : (
+          <div className="header-avatar-wrapper">
+            {/* Group 944 Speech Bubble for Player 2 (Left Side) */}
+            {p2Emoji && <Group944 emoji={p2Emoji} side="left" />}
+
+            <div className="header-avatar-circle circle-blue">
               <img src={user2} alt={player2Name} />
-            )}
+            </div>
           </div>
         </div>
       </div>

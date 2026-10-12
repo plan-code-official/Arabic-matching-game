@@ -1972,7 +1972,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 4px 8px 0;
+  padding: clamp(14px, 2.5vh, 24px) 8px 0;
 }
 
 /* ── Cards area: fills ALL remaining space, NO scroll ── */
@@ -2704,32 +2704,124 @@ body {
 }
 
 /* ═══════════════════════════════════════════════
-   AVATAR EMOJI REPLACEMENT (IN PLACE OF USER IMAGE)
+   GROUP 944: COMPACT EMOJI SPEECH BUBBLE
+   Positioned on the LEFT SIDE of the avatar image
+   Figma Specs:
+   - Rectangle 714: linear-gradient(175.11deg, #FFFFFF 2.38%, #0054A2 816.94%)
+   - Polygon 6 tail: #E9F0F7
 ═══════════════════════════════════════════════ */
-.avatar-emoji-active {
-  font-size: 2.3rem;
+.group-944-container {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 76px;
+  height: 46px;
+  pointer-events: none;
+  z-index: 120;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.22)) drop-shadow(0 2px 6px rgba(0, 84, 162, 0.25));
+}
+
+/* For Player 1 (User on the right): Bubble sits on the LEFT SIDE of user avatar */
+.group-944-right {
+  right: calc(100% + 10px);
+  left: auto;
+  animation: group-944-pop-left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* For Player 2 (Hakim on the left): Bubble sits on the RIGHT SIDE of Hakim avatar */
+.group-944-left {
+  left: calc(100% + 10px);
+  right: auto;
+  animation: group-944-pop-right 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Rectangle 714: Speech bubble body */
+.group-944-rectangle {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(175.11deg, #FFFFFF 2.38%, #0054A2 816.94%);
+  border-radius: 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 1.5px 3px rgba(255, 255, 255, 0.9);
+}
+
+.group-944-emoji {
+  font-size: 1.85rem;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: avatar-emoji-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
   user-select: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  animation: group-944-emoji-wobble 2s ease-in-out infinite alternate;
 }
 
-@keyframes avatar-emoji-pop {
+/* Polygon 6: Speech bubble tail pointing directly into avatar */
+.group-944-polygon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 16px;
+  pointer-events: none;
+}
+
+/* For Player 1 (bubble on left side): Tail is on right edge pointing right into user avatar */
+.group-944-right .group-944-polygon {
+  right: -9px;
+  left: auto;
+}
+
+/* For Player 2 (bubble on right side): Tail is on left edge pointing left into Hakim avatar */
+.group-944-left .group-944-polygon {
+  left: -9px;
+  right: auto;
+}
+
+@keyframes group-944-pop-left {
   0% {
-    transform: scale(0.3);
     opacity: 0;
+    transform: translateY(-50%) translateX(16px) scale(0.3);
   }
-
   65% {
-    transform: scale(1.22);
-  }
-
-  100% {
-    transform: scale(1);
     opacity: 1;
+    transform: translateY(-50%) translateX(-2px) scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+}
+
+@keyframes group-944-pop-right {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-16px) scale(0.3);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(2px) scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+}
+
+@keyframes group-944-emoji-wobble {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.08);
+  }
+  100% {
+    transform: translateY(1.5px) scale(0.96);
   }
 }
 
@@ -2774,8 +2866,38 @@ body {
     height: 28px;
   }
 
-  .avatar-emoji-active {
-    font-size: 1.5rem;
+  .group-944-container {
+    width: 58px;
+    height: 38px;
+  }
+
+  .group-944-right {
+    right: calc(100% + 6px);
+  }
+
+  .group-944-left {
+    left: calc(100% + 6px);
+  }
+
+  .group-944-rectangle {
+    border-radius: 13px;
+  }
+
+  .group-944-emoji {
+    font-size: 1.4rem;
+  }
+
+  .group-944-polygon {
+    width: 8px;
+    height: 13px;
+  }
+
+  .group-944-right .group-944-polygon {
+    right: -7px;
+  }
+
+  .group-944-left .group-944-polygon {
+    left: -7px;
   }
 
   /* Chat button sits cleanly next to the avatar (NOT on top of it!) */
@@ -3237,8 +3359,38 @@ body {
     height: 20px;
   }
 
-  .avatar-emoji-active {
-    font-size: 1.1rem;
+  .group-944-container {
+    width: 48px;
+    height: 32px;
+  }
+
+  .group-944-right {
+    right: calc(100% + 5px);
+  }
+
+  .group-944-left {
+    left: calc(100% + 5px);
+  }
+
+  .group-944-rectangle {
+    border-radius: 11px;
+  }
+
+  .group-944-emoji {
+    font-size: 1.2rem;
+  }
+
+  .group-944-polygon {
+    width: 7px;
+    height: 11px;
+  }
+
+  .group-944-right .group-944-polygon {
+    right: -6px;
+  }
+
+  .group-944-left .group-944-polygon {
+    left: -6px;
   }
 
   .header-chat-btn {

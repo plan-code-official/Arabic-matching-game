@@ -587,13 +587,20 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   };
 
   // ─── EMOJI REACTIONS ─────────────────────────────────────────────────────
+  const p1EmojiTimeoutRef = useRef<any>(null);
   const handleEmojiClick = (emoji: string) => {
+    if (p1EmojiTimeoutRef.current) {
+      clearTimeout(p1EmojiTimeoutRef.current);
+    }
     setP1Emoji(emoji);
     audio.playClick();
     if (mpServiceRef.current) {
       mpServiceRef.current.sendEmoji(emoji);
     }
-    setTimeout(() => setP1Emoji(''), 3000);
+    p1EmojiTimeoutRef.current = setTimeout(() => {
+      setP1Emoji('');
+      p1EmojiTimeoutRef.current = null;
+    }, 3000);
   };
 
   // ─── RENDER ──────────────────────────────────────────────────────────────
