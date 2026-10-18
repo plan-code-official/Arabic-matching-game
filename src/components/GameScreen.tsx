@@ -65,6 +65,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [isWaitingForFlipBack, setIsWaitingForFlipBack] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isAIThinking, setIsAIThinking] = useState(false);
@@ -541,6 +542,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   useEffect(() => {
     if (isGameOver && apiSessionId) {
       const submitAndComplete = async () => {
+        setIsSubmitting(true);
         try {
           let answersToSubmit = answersRef.current;
           // Fallback if player did literally nothing and AI solved the whole game
@@ -558,6 +560,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           setApiRewards(completeRes?.data || completeRes);
         } catch (e) {
           console.error('API Error ending session', e);
+        } finally {
+          setIsSubmitting(false);
         }
       };
       submitAndComplete();
@@ -696,6 +700,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       )}
 
       {/* ─ 6. Endgame Overlays ─ */}
+      {isSubmitting && (
+        <div className="submitting-overlay" aria-busy="true">
+          <div className="submitting-spinner" />
+        </div>
+      )}
+
       {showCelebration && (
         <CelebrationWrapper
           isVisible={showCelebration}
