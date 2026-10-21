@@ -3681,7 +3681,7 @@ body {
   position: relative;
   width: min(86vw, 1040px);
   height: min(80vh, 750px);
-  font-family: 'Lateef', serif;
+  font-family: 'Cairo', 'Fredoka One', 'Nunito', sans-serif;
   /* Soft Cloudy Frost Acrylic Glass (as in screenshot) */
   background: linear-gradient(135deg,
       rgba(224, 233, 246, 0.54) 0%,
@@ -3790,7 +3790,7 @@ body {
   width: 100%;
   height: 100%;
   min-height: 0;
-  font-family: 'Lateef', serif;
+  font-family: 'Cairo', 'Fredoka One', 'Nunito', sans-serif;
   /* Light Frosted Acrylic Glass Tile (as in screenshot) */
   background: linear-gradient(180deg,
       rgba(255, 255, 255, 0.62) 0%,
@@ -3846,17 +3846,18 @@ body {
 .emoji-grid-name {
   width: 100%;
   text-align: center;
-  font-family: 'Lateef', serif;
-  font-size: clamp(2.2rem, 4.2vh, 3.2rem);
-  font-weight: 900;
+  font-family: 'Cairo', 'Fredoka One', 'Nunito', sans-serif;
+  font-size: clamp(1.05rem, 2.3vh, 1.45rem);
+  font-weight: 800;
   color: #0b2545 !important;
   display: block;
-  line-height: 1;
+  line-height: 1.25;
   text-shadow: none !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  letter-spacing: -0.2px;
 }
 
 /* Custom Minimalist Glass Scrollbar (fallback) */
@@ -3922,7 +3923,7 @@ body {
   }
 
   .emoji-grid-name {
-    font-size: clamp(1.8rem, 3.6vh, 2.5rem);
+    font-size: clamp(0.95rem, 2vh, 1.25rem);
     color: #0b2545 !important;
     text-shadow: none !important;
   }
@@ -3961,7 +3962,7 @@ body {
   }
 
   .emoji-grid-name {
-    font-size: clamp(1.5rem, 4.5vh, 2rem);
+    font-size: clamp(0.85rem, 3.2vh, 1.1rem);
     color: #0b2545 !important;
     text-shadow: none !important;
   }
@@ -3970,11 +3971,11 @@ body {
 /* Screens > 900px: Larger text and icons */
 @media (min-width: 900px) {
   .emoji-grid-name {
-    font-size: clamp(3rem, 5vh, 4.2rem);
+    font-size: clamp(1.2rem, 2.5vh, 1.65rem);
   }
 
   .emoji-grid-icon {
-    font-size: clamp(3.6rem, 6.5vh, 5rem);
+    font-size: clamp(3.2rem, 5.5vh, 4.4rem);
   }
 }
 
