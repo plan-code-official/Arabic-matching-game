@@ -1,6 +1,6 @@
-const STUDENT_API_BASE = 'https://learning-platform-1euu.onrender.com/api/v1';
-const USER_API_BASE = 'https://learning-platform-1euu.onrender.com/api/v1';
-const API_BASE = `${import.meta.env.VITE_API_BASE_URL || 'https://learning-platform-1euu.onrender.com'}/api/v1`;
+const STUDENT_API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.medinaty.com/api/v1';
+const USER_API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.medinaty.com/api/v1';
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL || 'https://api.medinaty.com'}/api/v1`;
 
 export type AuthType = 'student' | 'user' | null;
 
